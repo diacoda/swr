@@ -7,7 +7,7 @@ public class Context
     public double LastYearWithdrawal { get; set; } = 0.0;
 
     public double Cash { get; set; } = 0.0;
-    public double Minimum { get; set; } = 0.0;
+    public double MinimumWithdrawalPercent { get; set; } = 0.0;
 
     public double YearStartValue { get; set; } = 0.0;
     public double YearWithdrawn { get; set; } = 0.0;

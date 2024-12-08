@@ -4,19 +4,48 @@ using Swr.Investment;
 using Swr.Processing;
 using Swr.Simulation;
 
+Scenario scenario = new Scenario();
+
 if (args.Length == 0)
 {
+    scenario.Years = 30;
+    scenario.StartYear = 1871;
+    scenario.EndYear = 2024;
+    scenario.Portfolio = new Portfolio("us_combined:100;");
+    scenario.Inflation = "us_inflation";
+    scenario.WithdrawFrequency = 1;
+    scenario.WMethod = WithdrawalMethod.VANGUARD;
+    scenario.Fees = 0.03f;
+    scenario.MinimumWithdrawalPercent = 0.03f;
+    scenario.Values = DataLoader.LoadValues(scenario.Portfolio.Allocations);
+    scenario.InflationData = DataLoader.LoadInflation(scenario.Values, scenario.Inflation);
+    bool r2 = scenario.PrepareExchangeRates("usd");
+    Vanguard.Simulate(scenario);
     return;
 }
+scenario.Years = 30;
+scenario.StartYear = 1871;
+scenario.EndYear = 2024;
+scenario.Portfolio = new Portfolio("us_stocks_orig:100;");
+scenario.Inflation = "us_inflation";
+scenario.WithdrawFrequency = 1;
+scenario.WMethod = WithdrawalMethod.VANGUARD;
+scenario.WR = 4.0f;
+scenario.Fees = 0.03f;
+scenario.MinimumWithdrawalPercent = 0.03f;
+scenario.Values = DataLoader.LoadValues(scenario.Portfolio.Allocations);
+scenario.InflationData = DataLoader.LoadInflation(scenario.Values, scenario.Inflation);
+bool r3 = scenario.PrepareExchangeRates("usd");
+Vanguard.Simulate(scenario);
+return;
 
 Dictionary<string, object> arguments = ParseArguments(args);
+
 string? command = arguments["command"].ToString();
 if (String.IsNullOrEmpty(command))
 {
-    return;
-}
 
-Scenario scenario = new Scenario();
+}
 
 scenario.Years = (int)arguments["years"];
 scenario.StartYear = (int)arguments["start"];

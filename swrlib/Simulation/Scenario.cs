@@ -27,7 +27,7 @@ public class Scenario
 
         WMethod = s.WMethod;
 
-        Minimum = s.Minimum;
+        MinimumWithdrawalPercent = s.MinimumWithdrawalPercent;
         VanguardMaxIncrease = s.VanguardMaxIncrease;
         VanguardMaxDecrease = s.VanguardMaxDecrease;
 
@@ -78,7 +78,7 @@ public class Scenario
     public float Threshold { get; set; } = 0.01f;
     public float Fees { get; set; } = 0.003f; // TER 0.3% = 0.003
     public WithdrawalMethod WMethod { get; set; } = WithdrawalMethod.STANDARD;
-    public float Minimum { get; set; } = 0.03f; // Minimum of 3% * initial
+    public float MinimumWithdrawalPercent { get; set; } = 0.03f; // Minimum of 3% * initial
 
     public float VanguardMaxIncrease { get; set; } = 0.05f;
     public float VanguardMaxDecrease { get; set; } = 0.02f;
@@ -338,7 +338,7 @@ public class Scenario
                 withdrawalAmount = (totalValue * (WR / 100.0)) / (12.0 / periods);
 
                 // Make sure, we don't go over the minimum
-                double minimumWithdrawal = context.Minimum / (12.0 / periods);
+                double minimumWithdrawal = context.MinimumWithdrawalPercent / (12.0 / periods);
 
                 if (withdrawalAmount < minimumWithdrawal)
                 {
@@ -373,7 +373,7 @@ public class Scenario
                 withdrawalAmount = context.VanguardWithdrawal / (12.0 / periods);
 
                 // Make sure, we don't go over the minimum
-                double minimumWithdrawal = context.Minimum / (12.0 / periods);
+                double minimumWithdrawal = context.MinimumWithdrawalPercent / (12.0 / periods);
                 if (withdrawalAmount < minimumWithdrawal)
                 {
                     withdrawalAmount = minimumWithdrawal;
@@ -634,7 +634,7 @@ public class Scenario
                 // The amount of money withdrawn per year (STANDARD method)
                 context.Withdrawal = InitialValue * (WR / 100.0f);
                 // The minimum amount of money withdraw (CURRENT method)
-                context.Minimum = InitialValue * Minimum;
+                context.MinimumWithdrawalPercent = InitialValue * MinimumWithdrawalPercent;
                 // The amount of cash available
                 context.Cash = InitialCash;
                 // Used for the target threshold
@@ -700,7 +700,7 @@ public class Scenario
                         double inflation = inflationVector[oldIndex].Value;
                         // Adjust withdrawals for inflation
                         context.Withdrawal *= inflation;
-                        context.Minimum *= inflation;
+                        context.MinimumWithdrawalPercent *= inflation;
                         context.TargetValue *= inflation;
 
                         // Perform withdrawals
