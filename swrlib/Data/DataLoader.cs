@@ -2,7 +2,7 @@
 using Swr.Investment;
 using System.Runtime.Caching;
 
-namespace Swr.Finance;
+namespace Swr.Data;
 
 public static class DataLoader
 {

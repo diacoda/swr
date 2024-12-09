@@ -1,4 +1,4 @@
-namespace Swr.Finance;
+namespace Swr.Data;
 
 // Define the DataVector class
 public class DataVector : IEnumerable<Item>

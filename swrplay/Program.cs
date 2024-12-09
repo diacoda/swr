@@ -1,5 +1,5 @@
 ﻿// See https://aka.ms/new-console-template for more information
-using Swr.Finance;
+using Swr.Data;
 using Swr.Investment;
 using Swr.Simulation;
 

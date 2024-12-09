@@ -1,4 +1,4 @@
-namespace Swr.Finance;
+namespace Swr.Data;
 
 public class Item
 {

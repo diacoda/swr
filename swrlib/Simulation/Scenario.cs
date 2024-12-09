@@ -1,5 +1,5 @@
 using System.Diagnostics;
-using Swr.Finance;
+using Swr.Data;
 using Swr.Investment;
 namespace Swr.Simulation;
 
@@ -22,7 +22,7 @@ public class Scenario
         InitialValue = s.InitialValue;
         WithdrawFrequency = s.WithdrawFrequency;
         Rebalance = s.Rebalance;
-        Threshold = s.Threshold;
+        RebalancingThreshold = s.RebalancingThreshold;
         Fees = s.Fees;
 
         WithdrawalMethod = s.WithdrawalMethod;
@@ -75,7 +75,7 @@ public class Scenario
     public float InitialValue { get; set; } = 1000.0f;
     public int WithdrawFrequency { get; set; } = 1;
     public Rebalancing Rebalance { get; set; } = Rebalancing.NONE;
-    public float Threshold { get; set; } = 0.01f;
+    public float RebalancingThreshold { get; set; } = 0.01f;
     public float Fees { get; set; } = 0.003f; // TER 0.3% = 0.003
     public WithdrawalMethod WithdrawalMethod { get; set; } = WithdrawalMethod.STANDARD;
     public float MinimumWithdrawalPercent { get; set; } = 0.03f; // Minimum of 3% * initial
@@ -245,7 +245,7 @@ public class Scenario
             double totalValue = Sum(currentValues);
             for (int i = 0; i < N; i++)
             {
-                if (Math.Abs((Portfolio.Allocations[i].AllocationCurrent / 100.0f) - currentValues[i] / totalValue) >= Threshold)
+                if (Math.Abs((Portfolio.Allocations[i].AllocationCurrent / 100.0f) - currentValues[i] / totalValue) >= RebalancingThreshold)
                 {
                     rebalance = true;
                     break;
@@ -338,7 +338,7 @@ public class Scenario
                 withdrawalAmount = (totalValue * (WithdrawalRate / 100.0)) / (12.0 / periods);
 
                 // Make sure, we don't go over the minimum
-                double minimumWithdrawal = context.MinimumWithdrawalPercent / (12.0 / periods);
+                double minimumWithdrawal = context.MinimumWithdrawal / (12.0 / periods);
 
                 if (withdrawalAmount < minimumWithdrawal)
                 {
@@ -373,7 +373,7 @@ public class Scenario
                 withdrawalAmount = context.VanguardWithdrawal / (12.0 / periods);
 
                 // Make sure, we don't go over the minimum
-                double minimumWithdrawal = context.MinimumWithdrawalPercent / (12.0 / periods);
+                double minimumWithdrawal = context.MinimumWithdrawal / (12.0 / periods);
                 if (withdrawalAmount < minimumWithdrawal)
                 {
                     withdrawalAmount = minimumWithdrawal;
@@ -609,7 +609,7 @@ public class Scenario
                 // The amount of money withdrawn per year (STANDARD method)
                 context.Withdrawal = InitialValue * (WithdrawalRate / 100.0f);
                 // The minimum amount of money withdraw (CURRENT method)
-                context.MinimumWithdrawalPercent = InitialValue * MinimumWithdrawalPercent;
+                context.MinimumWithdrawal = InitialValue * MinimumWithdrawalPercent;
                 // The amount of cash available
                 context.Cash = InitialCash;
                 // Used for the target threshold
@@ -703,7 +703,7 @@ public class Scenario
                         inflationVector.MoveNext();
                         // Adjust withdrawals for inflation
                         context.Withdrawal *= inflation;
-                        context.MinimumWithdrawalPercent *= inflation;
+                        context.MinimumWithdrawal *= inflation;
                         context.TargetValue *= inflation;
 
                         // Perform withdrawals
