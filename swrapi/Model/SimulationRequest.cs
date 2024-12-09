@@ -15,7 +15,7 @@ public class SimulationRequest
     public int EndYear { get; set; } = 2024;
     public string Portfolio { get; set; } = String.Empty;
     public string Inflation { get; set; } = String.Empty;
-    public float? WithdrawalRate { get; set; } = 0.04f;
+    public float WithdrawalRate { get; set; } = 0.04f;
     public float Fees { get; set; } = 0.003f;
     public WithdrawalMethod WithdrawalMethod { get; set; } = WithdrawalMethod.STANDARD;
     public WithdrawalFrequency WithdrawalFrequency { get; set; } = WithdrawalFrequency.Monthly;

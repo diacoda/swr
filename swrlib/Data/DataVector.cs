@@ -82,8 +82,12 @@ public class DataVector : IEnumerable<Item>
     // Method to load data from a CSV file
     public void LoadDataFromCsv(string filePath)
     {
-        using var reader = new StreamReader(filePath);
-        string line;
+        if (!File.Exists(filePath))
+        {
+            throw new FileNotFoundException($"{filePath} not found");
+        }
+        using StreamReader reader = new StreamReader(filePath);
+        string? line;
         while ((line = reader.ReadLine()) != null)
         {
             var values = line.Split(',');
@@ -157,22 +161,7 @@ public class DataVector : IEnumerable<Item>
     }
 
     // Method to get the value for a specific year and month
-    public double GetValue2(int year, int month)
-    {
-        foreach (var dataItem in Data)
-        {
-            if (dataItem.Year == year && dataItem.Month == month)
-            {
-                return dataItem.Value;
-            }
-        }
-
-        Console.WriteLine("This should not happen (value out of range)");
-        return 0.0f;
-    }
-
-    // Method to get the value for a specific year and month
-    public double? GetValue(int year, int month)
+    private double? GetValue(int year, int month)
     {
         foreach (var dataItem in Data)
         {
@@ -186,7 +175,7 @@ public class DataVector : IEnumerable<Item>
     }
 
     // Method to get the index of the first occurrence of a specific year and month
-    public int GetIndex(int year, int month)
+    private int GetIndex(int year, int month)
     {
         for (int i = 0; i < Data.Count; i++)
         {
@@ -200,7 +189,7 @@ public class DataVector : IEnumerable<Item>
         return 0;
     }
 
-    public DataVector GetDataVector(int startIndex)
+    private DataVector GetDataVector(int startIndex)
     {
         if (startIndex < 0 || startIndex >= Data.Count)
             throw new ArgumentOutOfRangeException(nameof(startIndex), "Start index must be within the bounds of the list.");
@@ -224,25 +213,7 @@ public class DataVector : IEnumerable<Item>
         {
             portion.AddData(Data[i]);
         }
-        //var portionData = data.GetRange(startIndex, data.Count - startIndex);
-        //var portion = new DataVector($"{Name} Portion from {year}-{month}");
-        //portion.data = portionData;
-
         return portion;
-    }
-
-    // Method to check if the start year and month are valid
-    public bool IsStartValid2(int year, int month)
-    {
-        foreach (var dataItem in Data)
-        {
-            if (dataItem.Year == year && dataItem.Month == month)
-            {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     // Method to check if the start year and month are valid

@@ -53,7 +53,7 @@ public class Scenario
 
     public Scenario()
     {
-
+        Portfolio = new Portfolio("");
     }
 
     private const float MonthlyRebalancingCost = 0.005f;
@@ -313,15 +313,15 @@ public class Scenario
 
     private bool Withdraw(Context context, List<double> currentValues, int N)
     {
-        if ((context.Months - 1) % WithdrawFrequency == 0)
+        if ((context.CurrentMonth - 1) % WithdrawFrequency == 0)
         {
             double totalValue = Sum(currentValues);
 
             int periods = WithdrawFrequency;
 
-            if ((context.Months - 1) + WithdrawFrequency > context.TotalMonths)
+            if ((context.CurrentMonth - 1) + WithdrawFrequency > context.TotalMonths)
             {
-                periods = context.TotalMonths - (context.Months - 1);
+                periods = context.TotalMonths - (context.CurrentMonth - 1);
             }
 
             double withdrawalAmount = 0;
@@ -348,12 +348,12 @@ public class Scenario
             else if (WithdrawalMethod == WithdrawalMethod.VANGUARD)
             {
                 // Compute the withdrawal for the year
-                if (context.Months == 1)
+                if (context.CurrentMonth == 1)
                 {
                     context.VanguardWithdrawal = totalValue * (WithdrawalRate / 100.0);
                     context.LastYearWithdrawal = context.VanguardWithdrawal;
                 }
-                else if ((context.Months - 1) % 12 == 0)
+                else if ((context.CurrentMonth - 1) % 12 == 0)
                 {
                     context.LastYearWithdrawal = context.VanguardWithdrawal;
                     context.VanguardWithdrawal = totalValue * (WithdrawalRate / 100.0f);
@@ -382,7 +382,7 @@ public class Scenario
 
             if (UseSocialSecurity)
             {
-                if ((context.Months / 12.0) >= SocialDelay)
+                if ((context.CurrentMonth / 12.0) >= SocialDelay)
                 {
                     withdrawalAmount -= (SocialCoverage * withdrawalAmount);
                 }
@@ -604,7 +604,7 @@ public class Scenario
                 bool failure = false;
 
                 Context context = new Context();
-                context.Months = 1;
+                context.CurrentMonth = 1;
                 context.TotalMonths = Years * 12;
                 // The amount of money withdrawn per year (STANDARD method)
                 context.Withdrawal = InitialValue * (WithdrawalRate / 100.0f);
@@ -620,7 +620,7 @@ public class Scenario
                     if (!failure && !result())
                     {
                         failure = true;
-                        res.RecordFailure(context.Months, currentMonth, currentYear);
+                        res.RecordFailure(context.CurrentMonth, currentMonth, currentYear);
                     }
                 };
 
@@ -663,7 +663,7 @@ public class Scenario
                     context.YearWithdrawn = 0.0;
 
                     int m;
-                    for (m = y == currentYear ? currentMonth : 1; !failure && m <= (y == endYear ? endMonth : 12); m++, context.Months++)
+                    for (m = y == currentYear ? currentMonth : 1; !failure && m <= (y == endYear ? endMonth : 12); m++, context.CurrentMonth++)
                     {
                         //Console.WriteLine($"{currentYear}/{currentMonth} Simulation, ext index {externalIndex}, index {index}, year: {y}, month: {m}");
 
@@ -711,7 +711,7 @@ public class Scenario
                         //Console.WriteLine($"W Month: {m}, Year: {y}, {currentValues.Sum()}");
 
                         // Record withdrawal
-                        if ((context.Months - 1) % 12 == 0)
+                        if ((context.CurrentMonth - 1) % 12 == 0)
                         {
                             withdrawals.Last().Add(context.LastWithdrawalAmount);
                         }

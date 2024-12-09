@@ -15,11 +15,11 @@ public class Context
 
     public double Withdrawal { get; set; } = 0.0f;
 
-    public int Months { get; set; } = 0;
+    public int CurrentMonth { get; set; } = 0;
     public int TotalMonths { get; set; } = 0;
 
     public bool End()
     {
-        return Months == TotalMonths;
+        return CurrentMonth == TotalMonths;
     }
 }

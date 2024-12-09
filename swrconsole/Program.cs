@@ -47,10 +47,20 @@ if (String.IsNullOrEmpty(command))
 scenario.Years = (int)arguments["years"];
 scenario.StartYear = (int)arguments["start"];
 scenario.EndYear = (int)arguments["end"];
-scenario.Portfolio = new Portfolio(arguments["portfolio"].ToString());
-if (arguments.TryGetValue("inflation", out var inflationValue) && !string.IsNullOrEmpty(inflationValue?.ToString()))
+if (arguments.TryGetValue("portfolio", out var portfolio) &&
+    !string.IsNullOrEmpty(portfolio?.ToString()))
 {
-    scenario.Inflation = inflationValue.ToString();
+    scenario.Portfolio = new Portfolio(portfolio.ToString()!);
+}
+else
+{
+    // default to 100% US Stocks
+    scenario.Portfolio = new Portfolio("us_stocks:100;");
+}
+if (arguments.TryGetValue("inflation", out var inflationValue) &&
+    inflationValue is string inflationStr && !string.IsNullOrEmpty(inflationStr))
+{
+    scenario.Inflation = inflationStr;
 }
 if (arguments.TryGetValue("withdrawalRate", out var wr))
 {
@@ -70,12 +80,11 @@ if (arguments.TryGetValue("limit", out var limit))
     // there is a default, 95
     scenario.SuccessRateLimit = (float)limit;
 }
-if (arguments.TryGetValue("rebalancing", out object rebalancingString))
+if (arguments.TryGetValue("rebalancing", out var rebalancingValue) &&
+    rebalancingValue is string rebalancingStr &&
+    Enum.TryParse(rebalancingStr, true, out Rebalancing rebalancing))
 {
-    if (Enum.TryParse(rebalancingString?.ToString(), true, out Rebalancing rebalancing))
-    {
-        scenario.Rebalance = rebalancing;
-    }
+    scenario.Rebalance = rebalancing;
 }
 
 scenario.Values = DataLoader.LoadValues(scenario.Portfolio.Allocations);

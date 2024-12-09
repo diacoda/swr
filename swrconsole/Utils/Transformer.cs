@@ -8,10 +8,15 @@ public class Transformer
         string outputFilePath = "../stock-data/usd_cad.csv";
         try
         {
+            if (!File.Exists(inputFilePath))
+            {
+                throw new FileNotFoundException($"{inputFilePath} not found");
+            }
+
             using (var reader = new StreamReader(inputFilePath))
             using (var writer = new StreamWriter(outputFilePath))
             {
-                string line;
+                string? line;
 
                 // Write the header to the output file
                 //writer.WriteLine("Month,Year,Value");

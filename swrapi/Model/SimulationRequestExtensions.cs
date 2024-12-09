@@ -17,7 +17,7 @@ public static class SimulationRequestExtensions
         Portfolio portfolio = new Portfolio(request.Portfolio);
         scenario.Portfolio = portfolio;
         scenario.Inflation = request.Inflation;
-        scenario.WithdrawalRate = (float)request.WithdrawalRate;
+        scenario.WithdrawalRate = request.WithdrawalRate;
         scenario.Fees = request.Fees;
         scenario.WithdrawalMethod = request.WithdrawalMethod;
         scenario.WithdrawFrequency = request.WithdrawalFrequency == WithdrawalFrequency.Monthly ? 12 : 1;
