@@ -930,7 +930,7 @@ public class Scenario
                     DataVector valuesCopy = new DataVector("exchange rates");
                     foreach (var rate in Values[i])
                     {
-                        valuesCopy.AddData(new Item(rate.Month, rate.Year, 1));
+                        valuesCopy.Data.Add(new Item(rate.Month, rate.Year, 1));
                     }
                     ExchangeRates.Add(valuesCopy);
                 }
@@ -943,7 +943,7 @@ public class Scenario
                     DataVector valuesCopy = new DataVector("exchange rates");
                     foreach (var rate in Values[i])
                     {
-                        valuesCopy.AddData(new Item(rate.Month, rate.Year, 1));
+                        valuesCopy.Data.Add(new Item(rate.Month, rate.Year, 1));
                     }
                     ExchangeRates.Add(valuesCopy);
                 }

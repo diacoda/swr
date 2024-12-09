@@ -18,9 +18,6 @@ public class Transformer
             {
                 string? line;
 
-                // Write the header to the output file
-                //writer.WriteLine("Month,Year,Value");
-
                 while ((line = reader.ReadLine()) != null)
                 {
                     // Split each line into date and value

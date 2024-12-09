@@ -3,33 +3,16 @@ namespace Swr.Data;
 // Define the DataVector class
 public class DataVector : IEnumerable<Item>
 {
-    // List to hold Data objects
-    //private List<Data> data;
     public List<Item> Data { get; set; }
 
     // Property for the name
     public string Name { get; set; }
-
-    // Property to access data
-    public IReadOnlyList<Item> ReadOnlyData => this.Data;
 
     // Constructor
     public DataVector(string name)
     {
         Name = name;
         Data = new List<Item>();
-    }
-
-    // Method to add data
-    public void AddData(Item dataItem)
-    {
-        Data.Add(dataItem);
-    }
-
-    // Enumerator to mimic const_iterator behavior
-    public IEnumerator<Item> GetEnumerator()
-    {
-        return Data.GetEnumerator();
     }
 
     public Item this[int i]
@@ -62,21 +45,21 @@ public class DataVector : IEnumerable<Item>
         return Data.Count == 0;
     }
 
-    // Read-only enumerator methods to mimic begin() and end()
-    public IEnumerator<Item> GetReadOnlyEnumerator()
+    System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
     {
-        return ((IEnumerable<Item>)Data).GetEnumerator();
+        return ((System.Collections.IEnumerable)Data).GetEnumerator();
     }
 
-    // IEnumerable<Data> implementation to support foreach loops
+    // IEnumerable<Item> implementation to support foreach loops
     public IEnumerable<Item> AsEnumerable()
     {
         return Data;
     }
 
-    System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
+    // Enumerator to mimic const_iterator behavior
+    public IEnumerator<Item> GetEnumerator()
     {
-        return ((System.Collections.IEnumerable)Data).GetEnumerator();
+        return Data.GetEnumerator();
     }
 
     // Method to load data from a CSV file
@@ -98,7 +81,7 @@ public class DataVector : IEnumerable<Item>
                 double value = double.Parse(values[2]);
 
                 var dataItem = new Item(month, year, value);
-                AddData(dataItem);
+                Data.Add(dataItem);
             }
         }
     }
@@ -211,7 +194,7 @@ public class DataVector : IEnumerable<Item>
         var portion = new DataVector($"{Name} Portion from {year}-{month}");
         for (int i = startIndex; i < Data.Count; i++)
         {
-            portion.AddData(Data[i]);
+            portion.Data.Add(Data[i]);
         }
         return portion;
     }

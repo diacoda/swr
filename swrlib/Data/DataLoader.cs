@@ -41,7 +41,7 @@ public static class DataLoader
                 {
                     foreach (var item in data.Data.GetRange(0, 12))
                     {
-                        copy.AddData(new Item(item.Month, startYear - i, item.Value));
+                        copy.Data.Add(new Item(item.Month, startYear - i, item.Value));
                     }
                 }
                 data.Data.InsertRange(0, copy.Data);
@@ -62,7 +62,7 @@ public static class DataLoader
             inflationData = new DataVector(values[0].Name);
             foreach (var value in values[0])
             {
-                inflationData.AddData(new Item(value.Month, value.Year, 1.0f));
+                inflationData.Data.Add(new Item(value.Month, value.Year, 1.0f));
             }
         }
         else
@@ -116,7 +116,7 @@ public static class DataLoader
 
         foreach (var item in originalData.Data)
         {
-            invertedData.AddData(new Item(item.Month, item.Year, 1.0f / item.Value));
+            invertedData.Data.Add(new Item(item.Month, item.Year, 1.0f / item.Value));
         }
 
         invertedData.NormalizeData();
