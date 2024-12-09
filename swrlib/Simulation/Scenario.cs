@@ -618,22 +618,8 @@ public class Scenario
         {
             for (int currentMonth = 1; currentMonth <= 12; currentMonth++)
             {
-                //Console.WriteLine($"Iteration, {externalIndex} year: {currentYear}, month: {currentMonth}");
-
                 double totalWithdrawn = 0.0;
                 bool failure = false;
-
-                Context context = new Context();
-                context.MonthIndex = 1;
-                context.TotalMonths = Years * 12;
-                // The amount of money withdrawn per year (STANDARD method)
-                context.Withdrawal = InitialValue * (WithdrawalRate / 100.0f);
-                // The minimum amount of money withdraw (CURRENT method)
-                context.MinimumWithdrawal = InitialValue * MinimumWithdrawalPercent;
-                // The amount of cash available
-                context.Cash = InitialCash;
-                // Used for the target threshold
-                context.TargetValue = InitialValue;
 
                 // Reset the allocation for the context
                 foreach (var asset in Portfolio.Allocations)
@@ -665,6 +651,18 @@ public class Scenario
                 // Add an empty list to the list of lists
                 withdrawals.Add(new List<double>());
 
+                Context context = new Context();
+                context.MonthIndex = 1;
+                context.TotalMonths = Years * 12;
+                // The amount of money withdrawn per year (STANDARD method)
+                context.Withdrawal = InitialValue * (WithdrawalRate / 100.0f);
+                // The minimum amount of money withdraw (CURRENT method)
+                context.MinimumWithdrawal = InitialValue * MinimumWithdrawalPercent;
+                // The amount of cash available
+                context.Cash = InitialCash;
+                // Used for the target threshold
+                context.TargetValue = InitialValue;
+
                 int endYear = currentYear + (currentMonth - 1 + context.TotalMonths - 1) / 12;
                 int endMonth = 1 + (currentMonth - 1 + (context.TotalMonths - 1) % 12) % 12;
 
@@ -673,8 +671,7 @@ public class Scenario
                     context.YearStartValue = currentValues.Sum();
                     context.YearWithdrawn = 0.0;
 
-                    int m;
-                    for (m = y == currentYear ? currentMonth : 1; !failure && m <= (y == endYear ? endMonth : 12); m++, context.MonthIndex++)
+                    for (int m = y == currentYear ? currentMonth : 1; !failure && m <= (y == endYear ? endMonth : 12); m++, context.MonthIndex++)
                     {
                         // Adjust the portfolio with returns and exchanges
                         for (int i = 0; i < N; i++)
