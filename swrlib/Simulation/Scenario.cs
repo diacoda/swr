@@ -37,8 +37,8 @@ public class Scenario
         CashSimple = s.CashSimple;
 
         Inflation = s.Inflation;
-        FinalThreshold = s.FinalThreshold;
-        FinalInflation = s.FinalInflation;
+        PercentageRemaining = s.PercentageRemaining;
+        AdjustRemainingWithInflation = s.AdjustRemainingWithInflation;
 
         UseGlidepath = s.UseGlidepath;
         GP_Pass = s.GP_Pass;
@@ -86,11 +86,14 @@ public class Scenario
     public int TimeoutMsecs { get; set; } = 0;
 
     public float InitialCash { get; set; } = 0.0f;
-    public bool CashSimple { get; set; } = true;
+    public bool CashSimple { get; set; } = false;
 
     public string Inflation { get; set; } = "no-inflation";
-    public float FinalThreshold { get; set; } = 0.01f;
-    public bool FinalInflation { get; set; } = true;
+    // the percentage from the initial value that must remain after withdrawals
+    // if the current value is below, then the simulation fails as it is not able to finish abive the percentage remaining threshold
+    public float PercentageRemaining { get; set; } = 0.01f;
+    // adjust the initial value with inflation, such that at the end of the simulation, the value is more realistic 
+    public bool AdjustRemainingWithInflation { get; set; } = true;
 
     public bool UseGlidepath { get; set; } = false;
     public float GP_Pass { get; set; } = 0.0f;
@@ -110,14 +113,15 @@ public class Scenario
             return currentValue <= 0.0f;
         }
 
-        // If it's the end, we need to respect the threshold
-        if (FinalInflation)
+        // If it's the end, we need to respect the percentage that must remain
+        if (AdjustRemainingWithInflation)
         {
-            return currentValue <= FinalThreshold * context.TargetValue;
+            // target value is adjusted with inflation
+            return currentValue <= PercentageRemaining * context.TargetValue;
         }
         else
         {
-            return currentValue <= FinalThreshold * InitialValue;
+            return currentValue <= PercentageRemaining * InitialValue;
         }
     }
 
@@ -311,17 +315,31 @@ public class Scenario
         return true;
     }
 
+    /// <summary>
+    /// Executes the withdrawal process for a given context and portfolio values. 
+    /// Adjusts portfolio values based on the withdrawal strategy and returns a 
+    /// boolean indicating success or failure of the withdrawal process.
+    /// </summary>
+    /// <param name="context">The context containing withdrawal parameters and state.</param>
+    /// <param name="currentValues">A list of current portfolio values for each asset class.</param>
+    /// <param name="N">The number of asset classes in the portfolio.</param>
+    /// <returns>
+    /// True if the withdrawal was successful, or the portfolio remains viable; 
+    /// False if the withdrawal leads to failure (e.g., depleting resources).
+    /// </returns>
     private bool Withdraw(Context context, List<double> currentValues, int N)
     {
-        if ((context.CurrentMonth - 1) % WithdrawFrequency == 0)
+        // Perform withdrawals only at specified intervals based on WithdrawFrequency.
+        if ((context.MonthIndex - 1) % WithdrawFrequency == 0)
         {
+            // Calculate the total portfolio value.
             double totalValue = Sum(currentValues);
 
+            // Determine the number of withdrawal periods remaining.
             int periods = WithdrawFrequency;
-
-            if ((context.CurrentMonth - 1) + WithdrawFrequency > context.TotalMonths)
+            if ((context.MonthIndex - 1) + WithdrawFrequency > context.TotalMonths)
             {
-                periods = context.TotalMonths - (context.CurrentMonth - 1);
+                periods = context.TotalMonths - (context.MonthIndex - 1);
             }
 
             double withdrawalAmount = 0;
@@ -329,15 +347,14 @@ public class Scenario
             // Compute the withdrawal amount based on the withdrawal strategy
             if (WithdrawalMethod == WithdrawalMethod.STANDARD)
             {
+                // Fixed annual withdrawal rate divided into periodic withdrawals.
                 withdrawalAmount = context.Withdrawal / (12.0f / periods);
-
             }
             else if (WithdrawalMethod == WithdrawalMethod.CURRENT)
             {
-
+                // Percentage-based withdrawal tied to the current portfolio value.
                 withdrawalAmount = (totalValue * (WithdrawalRate / 100.0)) / (12.0 / periods);
-
-                // Make sure, we don't go over the minimum
+                // Ensure the withdrawal does not fall below the specified minimum.
                 double minimumWithdrawal = context.MinimumWithdrawal / (12.0 / periods);
 
                 if (withdrawalAmount < minimumWithdrawal)
@@ -347,18 +364,20 @@ public class Scenario
             }
             else if (WithdrawalMethod == WithdrawalMethod.VANGUARD)
             {
-                // Compute the withdrawal for the year
-                if (context.CurrentMonth == 1)
+                // Vanguard's dynamic withdrawal strategy, adjusting year-over-year.
+                if (context.MonthIndex == 1)
                 {
+                    // Fisrt year: initialize Vanguard withdrawal
                     context.VanguardWithdrawal = totalValue * (WithdrawalRate / 100.0);
                     context.LastYearWithdrawal = context.VanguardWithdrawal;
                 }
-                else if ((context.CurrentMonth - 1) % 12 == 0)
+                else if ((context.MonthIndex - 1) % 12 == 0)
                 {
+                    // Update withdrawals annually.
                     context.LastYearWithdrawal = context.VanguardWithdrawal;
                     context.VanguardWithdrawal = totalValue * (WithdrawalRate / 100.0f);
 
-                    // Don't go over a given maximum decrease or increase
+                    // Cap increases and decreases based on specified limits.
                     if (context.VanguardWithdrawal > (1.0f + VanguardMaxIncrease) * context.LastYearWithdrawal)
                     {
                         context.VanguardWithdrawal = (1.0f + VanguardMaxIncrease) * context.LastYearWithdrawal;
@@ -368,11 +387,10 @@ public class Scenario
                         context.VanguardWithdrawal = (1.0f - VanguardMaxDecrease) * context.LastYearWithdrawal;
                     }
                 }
-
-                // The base amount to withdraw
+                // Adjust withdrawal to a periodic base
                 withdrawalAmount = context.VanguardWithdrawal / (12.0 / periods);
 
-                // Make sure, we don't go over the minimum
+                // Ensure a minimum withdrawal amount is maintained.
                 double minimumWithdrawal = context.MinimumWithdrawal / (12.0 / periods);
                 if (withdrawalAmount < minimumWithdrawal)
                 {
@@ -380,23 +398,26 @@ public class Scenario
                 }
             }
 
+            // Adjust withdrawal based on social security coverage if applicable.
             if (UseSocialSecurity)
             {
-                if ((context.CurrentMonth / 12.0) >= SocialDelay)
+                if ((context.MonthIndex / 12.0) >= SocialDelay)
                 {
                     withdrawalAmount -= (SocialCoverage * withdrawalAmount);
                 }
             }
             context.LastWithdrawalAmount = withdrawalAmount;
 
+            // If no withdrawal amount is required, exit early as successful.
             if (withdrawalAmount <= 0.0f)
             {
                 return true;
             }
-
+            // Calculate the effective withdrawal rate.
             double effectiveWithdrawalRate = withdrawalAmount / context.YearStartValue;
 
-            // Strategies with cash
+            // Strategies with cash or effective withdrawal rate is greater than the monthly WithdrawalRate
+            // withdrawing from cash if the effective rate exceeds the target monthly rate.
             if (CashSimple || ((effectiveWithdrawalRate * 100.0f) >= (WithdrawalRate / 12.0f)))
             {
                 // First, withdraw from cash if possible
@@ -416,21 +437,20 @@ public class Scenario
                     }
                 }
             }
-
-            // Adjust each value proportionally
+            // Adjust each portfolio value proportionally to account for the withdrawal.
             for (int i = 0; i < currentValues.Count; i++)
             {
                 double proportion = currentValues[i] / totalValue;
                 double withdrawal = proportion * withdrawalAmount;
                 currentValues[i] = Math.Max(0.0f, currentValues[i] - withdrawal);
             }
-
-            // Check for failure after the withdrawal
+            // Check for portfolio failure after the withdrawal
             if (IsFailure(context, Sum(currentValues)))
             {
                 context.YearWithdrawn += totalValue;
                 return false;
             }
+            // Update the total withdrawn for the year
             context.YearWithdrawn += withdrawalAmount;
 
         }
@@ -604,7 +624,7 @@ public class Scenario
                 bool failure = false;
 
                 Context context = new Context();
-                context.CurrentMonth = 1;
+                context.MonthIndex = 1;
                 context.TotalMonths = Years * 12;
                 // The amount of money withdrawn per year (STANDARD method)
                 context.Withdrawal = InitialValue * (WithdrawalRate / 100.0f);
@@ -620,7 +640,7 @@ public class Scenario
                     if (!failure && !result())
                     {
                         failure = true;
-                        res.RecordFailure(context.CurrentMonth, currentMonth, currentYear);
+                        res.RecordFailure(context.MonthIndex, currentMonth, currentYear);
                     }
                 };
 
@@ -663,7 +683,7 @@ public class Scenario
                     context.YearWithdrawn = 0.0;
 
                     int m;
-                    for (m = y == currentYear ? currentMonth : 1; !failure && m <= (y == endYear ? endMonth : 12); m++, context.CurrentMonth++)
+                    for (m = y == currentYear ? currentMonth : 1; !failure && m <= (y == endYear ? endMonth : 12); m++, context.MonthIndex++)
                     {
                         //Console.WriteLine($"{currentYear}/{currentMonth} Simulation, ext index {externalIndex}, index {index}, year: {y}, month: {m}");
 
@@ -711,7 +731,7 @@ public class Scenario
                         //Console.WriteLine($"W Month: {m}, Year: {y}, {currentValues.Sum()}");
 
                         // Record withdrawal
-                        if ((context.CurrentMonth - 1) % 12 == 0)
+                        if ((context.MonthIndex - 1) % 12 == 0)
                         {
                             withdrawals.Last().Add(context.LastWithdrawalAmount);
                         }
