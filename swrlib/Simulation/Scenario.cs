@@ -14,7 +14,7 @@ public class Scenario
         ExchangeRates = s.ExchangeRates;
 
         Years = s.Years;
-        WR = s.WR;
+        WithdrawalRate = s.WithdrawalRate;
         StartYear = s.StartYear;
         EndYear = s.EndYear;
 
@@ -25,7 +25,7 @@ public class Scenario
         Threshold = s.Threshold;
         Fees = s.Fees;
 
-        WMethod = s.WMethod;
+        WithdrawalMethod = s.WithdrawalMethod;
 
         MinimumWithdrawalPercent = s.MinimumWithdrawalPercent;
         VanguardMaxIncrease = s.VanguardMaxIncrease;
@@ -67,7 +67,7 @@ public class Scenario
     public List<DataVector> ExchangeRates { get; set; } = new List<DataVector>();
 
     public int Years { get; set; }
-    public float WR { get; set; } = 0.04f;
+    public float WithdrawalRate { get; set; } = 0.04f;
     public int StartYear { get; set; }
     public int EndYear { get; set; }
     // success rate limit for finding safw withdrawal rate, the success rate must be bigger than this rate
@@ -77,7 +77,7 @@ public class Scenario
     public Rebalancing Rebalance { get; set; } = Rebalancing.NONE;
     public float Threshold { get; set; } = 0.01f;
     public float Fees { get; set; } = 0.003f; // TER 0.3% = 0.003
-    public WithdrawalMethod WMethod { get; set; } = WithdrawalMethod.STANDARD;
+    public WithdrawalMethod WithdrawalMethod { get; set; } = WithdrawalMethod.STANDARD;
     public float MinimumWithdrawalPercent { get; set; } = 0.03f; // Minimum of 3% * initial
 
     public float VanguardMaxIncrease { get; set; } = 0.05f;
@@ -327,15 +327,15 @@ public class Scenario
             double withdrawalAmount = 0;
 
             // Compute the withdrawal amount based on the withdrawal strategy
-            if (WMethod == WithdrawalMethod.STANDARD)
+            if (WithdrawalMethod == WithdrawalMethod.STANDARD)
             {
                 withdrawalAmount = context.Withdrawal / (12.0f / periods);
 
             }
-            else if (WMethod == WithdrawalMethod.CURRENT)
+            else if (WithdrawalMethod == WithdrawalMethod.CURRENT)
             {
 
-                withdrawalAmount = (totalValue * (WR / 100.0)) / (12.0 / periods);
+                withdrawalAmount = (totalValue * (WithdrawalRate / 100.0)) / (12.0 / periods);
 
                 // Make sure, we don't go over the minimum
                 double minimumWithdrawal = context.MinimumWithdrawalPercent / (12.0 / periods);
@@ -345,18 +345,18 @@ public class Scenario
                     withdrawalAmount = minimumWithdrawal;
                 }
             }
-            else if (WMethod == WithdrawalMethod.VANGUARD)
+            else if (WithdrawalMethod == WithdrawalMethod.VANGUARD)
             {
                 // Compute the withdrawal for the year
                 if (context.Months == 1)
                 {
-                    context.VanguardWithdrawal = totalValue * (WR / 100.0);
+                    context.VanguardWithdrawal = totalValue * (WithdrawalRate / 100.0);
                     context.LastYearWithdrawal = context.VanguardWithdrawal;
                 }
                 else if ((context.Months - 1) % 12 == 0)
                 {
                     context.LastYearWithdrawal = context.VanguardWithdrawal;
-                    context.VanguardWithdrawal = totalValue * (WR / 100.0f);
+                    context.VanguardWithdrawal = totalValue * (WithdrawalRate / 100.0f);
 
                     // Don't go over a given maximum decrease or increase
                     if (context.VanguardWithdrawal > (1.0f + VanguardMaxIncrease) * context.LastYearWithdrawal)
@@ -394,10 +394,10 @@ public class Scenario
                 return true;
             }
 
-            double effWr = withdrawalAmount / context.YearStartValue;
+            double effectiveWithdrawalRate = withdrawalAmount / context.YearStartValue;
 
             // Strategies with cash
-            if (CashSimple || ((effWr * 100.0f) >= (WR / 12.0f)))
+            if (CashSimple || ((effectiveWithdrawalRate * 100.0f) >= (WithdrawalRate / 12.0f)))
             {
                 // First, withdraw from cash if possible
                 if (context.Cash > 0.0f)
@@ -437,10 +437,6 @@ public class Scenario
         return true;
     }
 
-    private bool ValidYear(List<DataVector> data, int year)
-    {
-        return data.Any(dataVector => dataVector.Data.Any(item => item.Year == year));
-    }
     public bool ValidYear(DataVector dataVector, int year)
     {
         // Check if any item in the Data list of the DataVector has the specified year
@@ -495,7 +491,7 @@ public class Scenario
                 return res;
             }
 
-            if (WMethod != WithdrawalMethod.STANDARD)
+            if (WithdrawalMethod != WithdrawalMethod.STANDARD)
             {
                 res.Message = "Social security is only implemented for standard withdrawal method";
                 res.Error = true;
@@ -503,9 +499,9 @@ public class Scenario
             }
         }
 
-        if (WMethod == WithdrawalMethod.VANGUARD && WithdrawFrequency != 1)
+        if (WithdrawalMethod == WithdrawalMethod.VANGUARD && WithdrawFrequency != 1)
         {
-            res.Message = "Vanguard dynamic spending is only implemented with monthly withdrawals";
+            res.Message = "Vanguard dynamic withdrawals is only implemented with monthly withdrawals";
             res.Error = true;
             return res;
         }
@@ -594,36 +590,15 @@ public class Scenario
             return res;
         }
 
-        // Prepare the starting points (for efficiency)
-        List<DataVector> startReturns = new List<DataVector>(N);
-        List<DataVector> startExchanges = new List<DataVector>(N);
-
-        List<DataVector> returns = new List<DataVector>(N);
-        List<DataVector> exchanges = new List<DataVector>(N);
-        // Populate the list with N instances of DataVector
-        for (int i = 0; i < N; i++)
-        {
-            returns.Add(new DataVector("returns" + i.ToString()));
-            exchanges.Add(new DataVector("exchanges" + i.ToString()));
-        }
-
-        for (int i = 0; i < N; i++)
-        {
-            startReturns.Add(Values[i].GetDataVector(StartYear, 1));
-            startExchanges.Add(ExchangeRates[i].GetDataVector(StartYear, 1));
-        }
-        DataVector startInflation = InflationData.GetDataVector(StartYear, 1);
-
         List<double> terminalValues = new List<double>();
-        List<List<double>> spending = new List<List<double>>();
+        List<List<double>> withdrawals = new List<List<double>>();
 
-        int externalIndex = 0;
         // 3. Do the actual simulation
         for (int currentYear = StartYear; currentYear <= EndYear - Years; currentYear++)
         {
             for (int currentMonth = 1; currentMonth <= 12; currentMonth++)
             {
-                //Console.WriteLine($"Iteration, year: {currentYear}, month: {currentMonth}");
+                //Console.WriteLine($"Iteration, {externalIndex} year: {currentYear}, month: {currentMonth}");
 
                 double totalWithdrawn = 0.0;
                 bool failure = false;
@@ -632,7 +607,7 @@ public class Scenario
                 context.Months = 1;
                 context.TotalMonths = Years * 12;
                 // The amount of money withdrawn per year (STANDARD method)
-                context.Withdrawal = InitialValue * (WR / 100.0f);
+                context.Withdrawal = InitialValue * (WithdrawalRate / 100.0f);
                 // The minimum amount of money withdraw (CURRENT method)
                 context.MinimumWithdrawalPercent = InitialValue * MinimumWithdrawalPercent;
                 // The amount of cash available
@@ -655,24 +630,33 @@ public class Scenario
                     asset.AllocationCurrent = asset.AllocationValue;
                 }
 
-                List<double> currentValues = new List<double>(new double[N]);
-                DataVector inflationVector = InflationData.GetDataVector(currentYear, 1);
+                // Get the data vector for the current year and month.
+                DataVector dv = InflationData.GetDataVector(currentYear, currentMonth);
+                IEnumerator<Item> inflationVector = dv.GetEnumerator();
+                inflationVector.MoveNext();
 
-                // Compute the initial values of the assets
+                List<double> currentValues = new List<double>(new double[N]);
+                List<IEnumerator<Item>> returns = new List<IEnumerator<Item>>(N);
+                List<IEnumerator<Item>> exchangeRates = new List<IEnumerator<Item>>(N);
                 for (int i = 0; i < N; i++)
                 {
+                    returns.Add(new List<Item>().GetEnumerator());
+                    returns[i] = Values[i].GetDataVector(currentYear, currentMonth).GetEnumerator();
+                    returns[i].MoveNext();
+
+                    exchangeRates.Add(new List<Item>().GetEnumerator());
+                    exchangeRates[i] = ExchangeRates[i].GetDataVector(currentYear, currentMonth).GetEnumerator();
+                    exchangeRates[i].MoveNext();
+
                     currentValues[i] = InitialValue * (Portfolio.Allocations[i].AllocationCurrent / 100.0f);
-                    returns[i] = startReturns[i];
-                    exchanges[i] = startExchanges[i];
                 }
+
                 // Add an empty list to the list of lists
-                spending.Add(new List<double>());
+                withdrawals.Add(new List<double>());
 
                 int endYear = currentYear + (currentMonth - 1 + context.TotalMonths - 1) / 12;
                 int endMonth = 1 + (currentMonth - 1 + (context.TotalMonths - 1) % 12) % 12;
 
-                int index = externalIndex;
-                int oldIndex = 0;
                 for (int y = currentYear; y <= endYear; y++)
                 {
                     context.YearStartValue = currentValues.Sum();
@@ -686,18 +670,37 @@ public class Scenario
                         // Adjust the portfolio with returns and exchanges
                         for (int i = 0; i < N; i++)
                         {
-                            //Console.WriteLine($"Monthly index: {index}, Year: {y}, Month: {m}, Return: {returns[i][index].Value}, {returns[i][index].Year}, {returns[i][index].Month}");
-                            currentValues[i] *= returns[i][index].Value;
-                            currentValues[i] *= exchanges[i][index].Value;
+                            currentValues[i] *= returns[i].Current.Value;
+                            if (y != returns[i].Current.Year || m != returns[i].Current.Month)
+                            {
+                                Console.WriteLine($"returns: no match year:{y} month:{m} i:{i}");
+                            }
+                            returns[i].MoveNext();
+                            currentValues[i] *= exchangeRates[i].Current.Value;
+                            if (y != exchangeRates[i].Current.Year || m != exchangeRates[i].Current.Month)
+                            {
+                                Console.WriteLine($"exchange rates: no match year:{y} month:{m} i:{i}");
+                            }
+                            exchangeRates[i].MoveNext();
+                            //Console.WriteLine($"Month: {m}, Year: {y}, Value: {currentValues[i]}, i: {i}");
                         }
 
                         // Handle failure scenarios
                         step(() => !IsFailure(context, currentValues.Sum()));
                         step(() => Glidepath(context, currentValues, N));
+                        //Console.WriteLine($"G Month: {m}, Year: {y}, {currentValues.Sum()}");
                         step(() => MonthlyRebalance(context, currentValues, N));
+                        //Console.WriteLine($"R Month: {m}, Year: {y}, {currentValues.Sum()}");
                         step(() => PayFees(context, currentValues, N));
+                        //Console.WriteLine($"F Month: {m}, Year: {y}, {currentValues.Sum()}");
 
-                        double inflation = inflationVector[oldIndex].Value;
+                        //double inflation = inflationVector[index].Value;
+                        double inflation = inflationVector.Current.Value;
+                        if (y != inflationVector.Current.Year || m != inflationVector.Current.Month)
+                        {
+                            Console.WriteLine($"Inflation: no match year:{y} month:{m}");
+                        }
+                        inflationVector.MoveNext();
                         // Adjust withdrawals for inflation
                         context.Withdrawal *= inflation;
                         context.MinimumWithdrawalPercent *= inflation;
@@ -705,19 +708,18 @@ public class Scenario
 
                         // Perform withdrawals
                         step(() => Withdraw(context, currentValues, N));
+                        //Console.WriteLine($"W Month: {m}, Year: {y}, {currentValues.Sum()}");
 
-                        // Record spending
+                        // Record withdrawal
                         if ((context.Months - 1) % 12 == 0)
                         {
-                            spending.Last().Add(context.LastWithdrawalAmount);
+                            withdrawals.Last().Add(context.LastWithdrawalAmount);
                         }
                         else
                         {
-                            spending.Last()[spending.Last().Count - 1] += context.LastWithdrawalAmount;
+                            withdrawals.Last()[withdrawals.Last().Count - 1] += context.LastWithdrawalAmount;
                         }
-                        //Console.WriteLine($"year: {y}, month: {m}, {currentValues.Sum()}");
-                        index++;
-                        oldIndex++;
+                        //Console.WriteLine($"Month: {m}, Year: {y}, {currentValues.Sum()}");
                     }
 
                     totalWithdrawn += context.YearWithdrawn;
@@ -766,7 +768,7 @@ public class Scenario
 
                 if (failure)
                 {
-                    spending.RemoveAt(spending.Count - 1);
+                    withdrawals.RemoveAt(withdrawals.Count - 1);
                 }
 
                 // Record periods
@@ -794,14 +796,13 @@ public class Scenario
                     res.BestTvMonth = currentMonth;
                     res.BestTv = finalValue;
                 }
-                externalIndex++;
             }
         }
         // Final metrics
         res.WithdrawnPerYear = (res.WithdrawnPerYear / Years) / res.Successes;
         res.SuccessRate = 100.0f * (res.Successes / (float)(res.Successes + res.Failures));
         res.ComputeTerminalValues(terminalValues);
-        res.ComputeSpending(spending, Years);
+        res.ComputeWithdrawals(withdrawals, Years);
 
         stopwatch.Stop();
 

@@ -28,11 +28,9 @@ public static class DataLoader
                 return new List<DataVector>();
             }
 
-            if (!assetName.Contains("combined"))
-            {
-                data.NormalizeData();
-                data.TransformToReturns();
-            }
+            data.NormalizeData();
+            data.TransformToReturns();
+
             if (x2)
             {
                 var copy = new DataVector(data.Name);

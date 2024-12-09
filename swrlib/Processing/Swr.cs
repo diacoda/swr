@@ -14,7 +14,7 @@ public class SafeWithdrawal
 
         for (float wr = 6.0f; wr >= 2.0f; wr -= 0.01f)
         {
-            scenario.WR = wr;
+            scenario.WithdrawalRate = wr;
 
             Results results = scenario.Simulate();
             //results.Print(wr.ToString());

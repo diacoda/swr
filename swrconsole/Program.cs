@@ -8,36 +8,33 @@ Scenario scenario = new Scenario();
 
 if (args.Length == 0)
 {
-    scenario.Years = 30;
-    scenario.StartYear = 1871;
-    scenario.EndYear = 2024;
-    scenario.Portfolio = new Portfolio("us_combined:100;");
-    scenario.Inflation = "us_inflation";
-    scenario.WithdrawFrequency = 1;
-    scenario.WMethod = WithdrawalMethod.VANGUARD;
-    scenario.Fees = 0.03f;
-    scenario.MinimumWithdrawalPercent = 0.03f;
-    scenario.Values = DataLoader.LoadValues(scenario.Portfolio.Allocations);
-    scenario.InflationData = DataLoader.LoadInflation(scenario.Values, scenario.Inflation);
-    bool r2 = scenario.PrepareExchangeRates("usd");
-    Vanguard.Simulate(scenario);
     return;
 }
+
 scenario.Years = 30;
 scenario.StartYear = 1871;
-scenario.EndYear = 2024;
+scenario.EndYear = 2023;
 scenario.Portfolio = new Portfolio("us_stocks_orig:100;");
 scenario.Inflation = "us_inflation";
 scenario.WithdrawFrequency = 1;
-scenario.WMethod = WithdrawalMethod.VANGUARD;
-scenario.WR = 4.0f;
-scenario.Fees = 0.03f;
+scenario.WithdrawalMethod = WithdrawalMethod.STANDARD;
+scenario.WithdrawalRate = 4.0f;
+scenario.Fees = 0.003f;
 scenario.MinimumWithdrawalPercent = 0.03f;
+
 scenario.Values = DataLoader.LoadValues(scenario.Portfolio.Allocations);
 scenario.InflationData = DataLoader.LoadInflation(scenario.Values, scenario.Inflation);
 bool r3 = scenario.PrepareExchangeRates("usd");
+Fixed.Simulate(scenario);
+
 Vanguard.Simulate(scenario);
-return;
+
+scenario.WithdrawalMethod = WithdrawalMethod.CURRENT;
+Vanguard.Simulate(scenario);
+
+scenario.WithdrawalMethod = WithdrawalMethod.VANGUARD;
+Vanguard.Simulate(scenario);
+
 
 Dictionary<string, object> arguments = ParseArguments(args);
 
@@ -55,14 +52,18 @@ if (arguments.TryGetValue("inflation", out var inflationValue) && !string.IsNull
 {
     scenario.Inflation = inflationValue.ToString();
 }
-if (arguments.TryGetValue("wr", out var wr))
+if (arguments.TryGetValue("withdrawalRate", out var wr))
 {
-    scenario.WR = (float)arguments["wr"];
+    scenario.WithdrawalRate = (float)wr;
 }
 if (arguments["fees"] != null)
 {
     // there is a default, 0.01
     scenario.Fees = (float)arguments["fees"] / 100.0f;
+}
+if (arguments.TryGetValue("minimumWithdrawalPercent", out var minimumWithdrawalPercent))
+{
+    scenario.MinimumWithdrawalPercent = (float)minimumWithdrawalPercent;
 }
 if (arguments.TryGetValue("limit", out var limit))
 {

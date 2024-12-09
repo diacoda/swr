@@ -23,7 +23,7 @@ public class MultipleWr
 
             // Copy the scenario for thread safety
             Scenario s = new Scenario(scenario);
-            s.WR = wr;
+            s.WithdrawalRate = wr;
             s.WithdrawFrequency = 12;
             // Run yearly simulation
             allYearlyResults[i] = s.Simulate();

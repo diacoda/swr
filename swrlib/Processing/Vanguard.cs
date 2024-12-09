@@ -19,8 +19,6 @@ public class Vanguard
             scenario.minimum = 0.03f;*/
     public static void Simulate(Scenario scenario)
     {
-        Results results = scenario.Simulate();
-
         var wrValues = Enumerable.Range(0, 29).Select(i => 3.0f + i * 0.1f).ToList();
 
         List<Results> allMonthlyResults = new List<Results>(wrValues.Count());
@@ -37,18 +35,20 @@ public class Vanguard
 
             // Copy the scenario for thread safety
             Scenario s = new Scenario(scenario);
-            s.WR = wr;
+            s.WithdrawalRate = wr;
             // Update scenario for monthly simulation
             s.WithdrawFrequency = 1;
 
             allMonthlyResults[i] = s.Simulate();
+            allMonthlyResults[i].WithdrawalRate = s.WithdrawalRate;
+            allMonthlyResults[i].WithdrawalMethod = s.WithdrawalMethod;
         });
 
         int i = 0;
         var sortedMonthly = allMonthlyResults.OrderBy(r => r.SuccessRate);
         foreach (Results r in sortedMonthly)
         {
-            r.Print("M" + i.ToString());
+            r.Print($"M{i}: Method: {r.WithdrawalMethod}, Rate: {r.WithdrawalRate}");
             i++;
         }
     }

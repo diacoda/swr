@@ -13,7 +13,7 @@ public class Failsafe
 
         for (float wr = startWr; wr >= endWr; wr -= step)
         {
-            scenario.WR = wr;
+            scenario.WithdrawalRate = wr;
             // default is scenario.WithdrawFrequency = 1; therefore monthly
             Results monthlyResults = scenario.Simulate();
 

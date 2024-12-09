@@ -9,20 +9,22 @@ public class Results
     public ulong Failures { get; set; } = 0;
     public float SuccessRate { get; set; } = 0.0f;
 
-    public double TvAverage { get; set; } = 0.0;
-    public double TvMinimum { get; set; } = 0.0;
-    public double TvMaximum { get; set; } = 0.0;
-    public double TvMedian { get; set; } = 0.0;
+    public double TerminalValueAverage { get; set; } = 0.0;
+    public double TerminalValueMinimum { get; set; } = 0.0;
+    public double TerminalValueMaximum { get; set; } = 0.0;
+    public double TerminalValueMedian { get; set; } = 0.0;
 
-    public double SpendingAverage { get; set; } = 0.0;
-    public double SpendingMinimum { get; set; } = 0.0;
-    public double SpendingMaximum { get; set; } = 0.0;
-    public double SpendingMedian { get; set; } = 0.0;
+    public float WithdrawalRate { get; set; } = 0.0f;
+    public WithdrawalMethod WithdrawalMethod { get; set; } = WithdrawalMethod.STANDARD;
+    public double WithdrawalAverage { get; set; } = 0.0;
+    public double WithdrawalMinimum { get; set; } = 0.0;
+    public double WithdrawalMaximum { get; set; } = 0.0;
+    public double WithdrawalMedian { get; set; } = 0.0;
 
-    public int YearsLargeSpending { get; set; } = 0;
-    public int YearsSmallSpending { get; set; } = 0;
-    public int YearsVolatileUpSpending { get; set; } = 0;
-    public int YearsVolatileDownSpending { get; set; } = 0;
+    public int YearsLargeWithdrawal { get; set; } = 0;
+    public int YearsSmallWithdrawal { get; set; } = 0;
+    public int YearsVolatileUpWithdrawal { get; set; } = 0;
+    public int YearsVolatileDownWithdrawal { get; set; } = 0;
 
     public int WorstDuration { get; set; } = 0;
     public int WorstStartingMonth { get; set; } = 0;
@@ -52,7 +54,8 @@ public class Results
 
     public void Print(string frequency)
     {
-        Console.WriteLine($"Success rate: {frequency}: ({this.Successes}/{this.Failures + this.Successes}) {this.SuccessRate} [{this.TvAverage}, {this.TvMedian}, {this.TvMinimum}, {this.TvMaximum}]");
+        Console.WriteLine($"Success rate: {frequency}: ({this.Successes}/{this.Failures + this.Successes}) {this.SuccessRate}");
+        Console.WriteLine($"Terminal Value: [avg:{this.TerminalValueAverage}, med:{this.TerminalValueMedian}, min:{this.TerminalValueMinimum}, max:{this.TerminalValueMaximum}]");
         if (Failures > 0)
         {
             Console.WriteLine($"         Worst duration: {WorstDuration} months ({WorstStartingMonth}/{WorstStartingYear})");
@@ -76,58 +79,58 @@ public class Results
         terminalValues.Sort();
 
         // Compute metrics
-        TvMedian = terminalValues[terminalValues.Count / 2];
-        TvMinimum = terminalValues.First();
-        TvMaximum = terminalValues.Last();
-        TvAverage = terminalValues.Sum() / terminalValues.Count;
+        TerminalValueMedian = terminalValues[terminalValues.Count / 2];
+        TerminalValueMinimum = terminalValues.First();
+        TerminalValueMaximum = terminalValues.Last();
+        TerminalValueAverage = terminalValues.Sum() / terminalValues.Count;
     }
 
-    public void ComputeSpending(List<List<double>> yearlySpending, int years)
+    public void ComputeWithdrawals(List<List<double>> yearlyWithdrawals, int years)
     {
-        var spending = new List<double>();
+        var withdrawals = new List<double>();
 
-        // Process yearly spending
-        foreach (var yearly in yearlySpending)
+        // Process yearly withdrawals
+        foreach (var yearly in yearlyWithdrawals)
         {
-            // Sum yearly spending
-            spending.Add(yearly.Sum());
+            // Sum yearly withdrawals
+            withdrawals.Add(yearly.Sum());
 
             for (int y = 1; y < yearly.Count; y++)
             {
-                // Large spending
+                // Large withdrawals
                 if (yearly[y] >= 1.5f * yearly[0])
                 {
-                    YearsLargeSpending++;
+                    YearsLargeWithdrawal++;
                 }
 
-                // Small spending
+                // Small withdrawal
                 if (yearly[y] <= 0.5f * yearly[0])
                 {
-                    YearsSmallSpending++;
+                    YearsSmallWithdrawal++;
                 }
 
-                // Volatile spending up
+                // Volatile withdrawal up
                 if (yearly[y] >= 1.1f * yearly[y - 1])
                 {
-                    YearsVolatileUpSpending++;
+                    YearsVolatileUpWithdrawal++;
                 }
 
-                // Volatile spending down
+                // Volatile withdrawal down
                 if (yearly[y] <= 0.9f * yearly[y - 1])
                 {
-                    YearsVolatileDownSpending++;
+                    YearsVolatileDownWithdrawal++;
                 }
             }
         }
 
         // Sort the spending values
-        spending.Sort();
+        withdrawals.Sort();
 
         // Compute metrics
-        SpendingMedian = spending[spending.Count / 2] / years;
-        SpendingMinimum = spending.First() / years;
-        SpendingMaximum = spending.Last() / years;
-        SpendingAverage = spending.Sum() / spending.Count / years;
+        WithdrawalMedian = withdrawals[withdrawals.Count / 2] / years;
+        WithdrawalMinimum = withdrawals.First() / years;
+        WithdrawalMaximum = withdrawals.Last() / years;
+        WithdrawalAverage = withdrawals.Sum() / withdrawals.Count / years;
     }
 
     public void RecordFailure(int months, int currentMonth, int currentYear)
