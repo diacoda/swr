@@ -635,15 +635,6 @@ public class Scenario
                 // Used for the target threshold
                 context.TargetValue = InitialValue;
 
-                Action<Func<bool>> step = result =>
-                {
-                    if (!failure && !result())
-                    {
-                        failure = true;
-                        res.RecordFailure(context.MonthIndex, currentMonth, currentYear);
-                    }
-                };
-
                 // Reset the allocation for the context
                 foreach (var asset in Portfolio.Allocations)
                 {
@@ -685,50 +676,35 @@ public class Scenario
                     int m;
                     for (m = y == currentYear ? currentMonth : 1; !failure && m <= (y == endYear ? endMonth : 12); m++, context.MonthIndex++)
                     {
-                        //Console.WriteLine($"{currentYear}/{currentMonth} Simulation, ext index {externalIndex}, index {index}, year: {y}, month: {m}");
-
                         // Adjust the portfolio with returns and exchanges
                         for (int i = 0; i < N; i++)
                         {
+                            Debug.Assert(y == returns[i].Current.Year && m == returns[i].Current.Month, $"Returns no match year:{y} month:{m} within current year: {currentYear} and current month: {currentMonth}");
                             currentValues[i] *= returns[i].Current.Value;
-                            if (y != returns[i].Current.Year || m != returns[i].Current.Month)
-                            {
-                                Console.WriteLine($"returns: no match year:{y} month:{m} i:{i}");
-                            }
                             returns[i].MoveNext();
+
+                            Debug.Assert(y == exchangeRates[i].Current.Year && m == exchangeRates[i].Current.Month, $"Exchange rates no match year:{y} month:{m} within current year: {currentYear} and current month: {currentMonth}");
                             currentValues[i] *= exchangeRates[i].Current.Value;
-                            if (y != exchangeRates[i].Current.Year || m != exchangeRates[i].Current.Month)
-                            {
-                                Console.WriteLine($"exchange rates: no match year:{y} month:{m} i:{i}");
-                            }
                             exchangeRates[i].MoveNext();
-                            //Console.WriteLine($"Month: {m}, Year: {y}, Value: {currentValues[i]}, i: {i}");
                         }
 
                         // Handle failure scenarios
-                        step(() => !IsFailure(context, currentValues.Sum()));
-                        step(() => Glidepath(context, currentValues, N));
-                        //Console.WriteLine($"G Month: {m}, Year: {y}, {currentValues.Sum()}");
-                        step(() => MonthlyRebalance(context, currentValues, N));
-                        //Console.WriteLine($"R Month: {m}, Year: {y}, {currentValues.Sum()}");
-                        step(() => PayFees(context, currentValues, N));
-                        //Console.WriteLine($"F Month: {m}, Year: {y}, {currentValues.Sum()}");
+                        step(() => !IsFailure(context, currentValues.Sum()), res, currentYear, currentMonth, ref failure, context);
+                        step(() => Glidepath(context, currentValues, N), res, currentYear, currentMonth, ref failure, context);
+                        step(() => MonthlyRebalance(context, currentValues, N), res, currentYear, currentMonth, ref failure, context);
+                        step(() => PayFees(context, currentValues, N), res, currentYear, currentMonth, ref failure, context);
 
-                        //double inflation = inflationVector[index].Value;
+                        Debug.Assert(y == inflationVector.Current.Year && m == inflationVector.Current.Month, $"Inflation no match year:{y} month:{m} within current year: {currentYear} and current month: {currentMonth}");
                         double inflation = inflationVector.Current.Value;
-                        if (y != inflationVector.Current.Year || m != inflationVector.Current.Month)
-                        {
-                            Console.WriteLine($"Inflation: no match year:{y} month:{m}");
-                        }
                         inflationVector.MoveNext();
+
                         // Adjust withdrawals for inflation
                         context.Withdrawal *= inflation;
                         context.MinimumWithdrawal *= inflation;
                         context.TargetValue *= inflation;
 
                         // Perform withdrawals
-                        step(() => Withdraw(context, currentValues, N));
-                        //Console.WriteLine($"W Month: {m}, Year: {y}, {currentValues.Sum()}");
+                        step(() => Withdraw(context, currentValues, N), res, currentYear, currentMonth, ref failure, context);
 
                         // Record withdrawal
                         if ((context.MonthIndex - 1) % 12 == 0)
@@ -739,15 +715,13 @@ public class Scenario
                         {
                             withdrawals.Last()[withdrawals.Last().Count - 1] += context.LastWithdrawalAmount;
                         }
-                        //Console.WriteLine($"Month: {m}, Year: {y}, {currentValues.Sum()}");
                     }
 
                     totalWithdrawn += context.YearWithdrawn;
-                    step(() => YearlyRebalance(context, currentValues, N));
+                    step(() => YearlyRebalance(context, currentValues, N), res, currentYear, currentMonth, ref failure, context);
 
                     if (failure)
                     {
-                        //Console.WriteLine("Simulation failure");
                         double effectiveWithdrawalRate = context.YearWithdrawn / context.YearStartValue;
 
                         if (res.LowestEffWrYear == 0 || effectiveWithdrawalRate < res.LowestEffWr)
@@ -767,12 +741,9 @@ public class Scenario
                         }
                         break;
                     }
-                    //Console.WriteLine($"Year: {y}, {currentValues.Sum()}");
                 }
 
                 double finalValue = failure ? 0.0 : currentValues.Sum();
-
-                //Console.WriteLine($"Final value: {finalValue}, current year: {currentYear}");
 
                 if (!failure)
                 {
@@ -827,6 +798,19 @@ public class Scenario
         stopwatch.Stop();
 
         return res;
+    }
+
+    private void step(Func<bool> result, Results? res, int currentYear, int currentMonth, ref bool failure, Context context)
+    {
+        if (!failure && !result())
+        {
+            failure = true;
+            if (res == null)
+            {
+                throw new NullReferenceException("res can't be null");
+            }
+            res.RecordFailure(context.MonthIndex, currentMonth, currentYear);
+        }
     }
 
     private Results ValidateAndAdaptYears(int N)

@@ -23,8 +23,10 @@ scenario.Fees = 0.003f;
 scenario.MinimumWithdrawalPercent = 0.03f;
 scenario.AdjustRemainingWithInflation = true;
 scenario.PercentageRemaining = 0.1f;
-scenario.CashSimple = true;
-scenario.InitialCash = 80;
+scenario.CashSimple = false;
+scenario.InitialCash = 0;
+//scenario.CashSimple = true;
+//scenario.InitialCash = 80;
 
 scenario.Values = DataLoader.LoadValues(scenario.Portfolio.Allocations);
 scenario.InflationData = DataLoader.LoadInflation(scenario.Values, scenario.Inflation);
