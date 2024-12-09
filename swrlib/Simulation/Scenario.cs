@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
+using Swr;
 using Swr.Data;
 using Swr.Investment;
 namespace Swr.Simulation;
@@ -622,6 +623,10 @@ public class Scenario
         {
             for (int currentMonth = 1; currentMonth <= 12; currentMonth++)
             {
+                Info info = new();
+                info.SimulationYear = currentYear;
+                info.SimulationMonth = currentMonth;
+
                 double totalWithdrawn = 0.0;
                 bool failure = false;
 
@@ -677,6 +682,9 @@ public class Scenario
 
                     for (int m = y == currentYear ? currentMonth : 1; !failure && m <= (y == endYear ? endMonth : 12); m++, context.MonthIndex++)
                     {
+                        info.ContextMonth = m;
+                        info.ContextYear = y;
+
                         // Adjust the portfolio with returns and exchanges
                         for (int i = 0; i < N; i++)
                         {
