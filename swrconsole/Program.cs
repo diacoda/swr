@@ -1,129 +1,166 @@
-﻿using System.Globalization;
+﻿using Microsoft.Extensions.Hosting;
+using Serilog;
+using System.Globalization;
 using Swr.Data;
 using Swr.Investment;
 using Swr.Processing;
 using Swr.Simulation;
+using Microsoft.Extensions.DependencyInjection;
 
-Scenario scenario = new Scenario();
+var logFilePath = "logs/swrconsole.log";
 
-if (args.Length == 0)
+// Configure Serilog
+Log.Logger = new LoggerConfiguration()
+    .MinimumLevel.Information() // Set minimum log level
+    .WriteTo.Console()          // Log to the console
+    .WriteTo.File(logFilePath,  // Log to a file
+                  rollingInterval: RollingInterval.Day, // Roll logs daily
+                  retainedFileCountLimit: 7)           // Retain the last 7 log files
+    .CreateLogger();
+
+try
 {
-    return;
-}
+    Log.Information("started");
+    var host = Host.CreateDefaultBuilder(args)
+        .UseSerilog() // Use Serilog as the logging provider
+        .ConfigureServices((context, services) =>
+        {
+            services.AddTransient<Scenario>(); // Register Scenario for DI
+        })
+        .Build();
 
-scenario.Years = 30;
-scenario.StartYear = 1871;
-scenario.EndYear = 2023;
-scenario.Portfolio = new Portfolio("us_stocks_orig:100;");
-scenario.Inflation = "us_inflation";
-scenario.WithdrawFrequency = 1;
-scenario.WithdrawalMethod = WithdrawalMethod.STANDARD;
-scenario.WithdrawalRate = 4.0f;
-scenario.Fees = 0.003f;
-scenario.MinimumWithdrawalPercent = 0.03f;
-scenario.AdjustRemainingWithInflation = true;
-scenario.PercentageRemaining = 0.1f;
-scenario.CashSimple = false;
-scenario.InitialCash = 0;
-//scenario.CashSimple = true;
-//scenario.InitialCash = 80;
+    // Resolve Scenario using DI
+    using var scope = host.Services.CreateScope(); // Create a scope for resolving services
+    var serviceProvider = scope.ServiceProvider;
+    Scenario scenario = scope.ServiceProvider.GetRequiredService<Scenario>();
 
-scenario.Values = DataLoader.LoadValues(scenario.Portfolio.Allocations);
-scenario.InflationData = DataLoader.LoadInflation(scenario.Values, scenario.Inflation);
-bool r3 = scenario.PrepareExchangeRates("usd");
-Fixed.Simulate(scenario);
-
-Vanguard.Simulate(scenario);
-
-scenario.WithdrawalMethod = WithdrawalMethod.CURRENT;
-Vanguard.Simulate(scenario);
-
-scenario.WithdrawalMethod = WithdrawalMethod.VANGUARD;
-Vanguard.Simulate(scenario);
-
-
-Dictionary<string, object> arguments = ParseArguments(args);
-
-string? command = arguments["command"].ToString();
-if (String.IsNullOrEmpty(command))
-{
-
-}
-
-scenario.Years = (int)arguments["years"];
-scenario.StartYear = (int)arguments["start"];
-scenario.EndYear = (int)arguments["end"];
-if (arguments.TryGetValue("portfolio", out var portfolio) &&
-    !string.IsNullOrEmpty(portfolio?.ToString()))
-{
-    scenario.Portfolio = new Portfolio(portfolio.ToString()!);
-}
-else
-{
-    // default to 100% US Stocks
-    scenario.Portfolio = new Portfolio("us_stocks:100;");
-}
-if (arguments.TryGetValue("inflation", out var inflationValue) &&
-    inflationValue is string inflationStr && !string.IsNullOrEmpty(inflationStr))
-{
-    scenario.Inflation = inflationStr;
-}
-if (arguments.TryGetValue("withdrawalRate", out var wr))
-{
-    scenario.WithdrawalRate = (float)wr;
-}
-if (arguments["fees"] != null)
-{
-    // there is a default, 0.01
-    scenario.Fees = (float)arguments["fees"] / 100.0f;
-}
-if (arguments.TryGetValue("minimumWithdrawalPercent", out var minimumWithdrawalPercent))
-{
-    scenario.MinimumWithdrawalPercent = (float)minimumWithdrawalPercent;
-}
-if (arguments.TryGetValue("limit", out var limit))
-{
-    // there is a default, 95
-    scenario.SuccessRateLimit = (float)limit;
-}
-if (arguments.TryGetValue("rebalancing", out var rebalancingValue) &&
-    rebalancingValue is string rebalancingStr &&
-    Enum.TryParse(rebalancingStr, true, out Rebalancing rebalancing))
-{
-    scenario.Rebalance = rebalancing;
-}
-
-scenario.Values = DataLoader.LoadValues(scenario.Portfolio.Allocations);
-scenario.InflationData = DataLoader.LoadInflation(scenario.Values, scenario.Inflation);
-bool r = scenario.PrepareExchangeRates("usd");
-
-switch (command)
-{
-    case "fixed":
-
-        //Console.WriteLine("Command \"fixed\"");
-        //Fixed f = new Fixed(args);
-        //f.LoadData();
-        Fixed.Simulate(scenario);
-        break;
-    case "swr":
-        //Swr swr = new Swr(args);
-        //swr.LoadData();
-        SafeWithdrawal.Simulate(scenario);
-        break;
-    case "multiple_wr":
-        MultipleWr.Simulate(scenario);
-        break;
-    case "frequency":
-        Frequency.Simulate(scenario, 100, 1);
-        break;
-    case "failsafe":
-        Failsafe.Simulate(scenario);
-        break;
-    default:
-        Console.WriteLine("No command match to execute");
+    if (args.Length == 0)
+    {
         return;
+    }
+
+    scenario.Years = 30;
+    scenario.StartYear = 1871;
+    scenario.EndYear = 2023;
+    scenario.Portfolio = new Portfolio("us_stocks_orig:100;");
+    scenario.Inflation = "us_inflation";
+    scenario.WithdrawFrequency = 1;
+    scenario.WithdrawalMethod = WithdrawalMethod.STANDARD;
+    scenario.WithdrawalRate = 4.0f;
+    scenario.Fees = 0.003f;
+    scenario.MinimumWithdrawalPercent = 0.03f;
+    scenario.AdjustRemainingWithInflation = true;
+    scenario.PercentageRemaining = 0.1f;
+    scenario.CashSimple = false;
+    scenario.InitialCash = 0;
+    //scenario.CashSimple = true;
+    //scenario.InitialCash = 80;
+
+    scenario.Values = DataLoader.LoadValues(scenario.Portfolio.Allocations);
+    scenario.InflationData = DataLoader.LoadInflation(scenario.Values, scenario.Inflation);
+    bool r3 = scenario.PrepareExchangeRates("usd");
+    Fixed.Simulate(scenario);
+
+    Vanguard.Simulate(scenario, scope.ServiceProvider);
+
+    scenario.WithdrawalMethod = WithdrawalMethod.CURRENT;
+    Vanguard.Simulate(scenario, scope.ServiceProvider);
+
+    scenario.WithdrawalMethod = WithdrawalMethod.VANGUARD;
+    Vanguard.Simulate(scenario, scope.ServiceProvider);
+
+    Dictionary<string, object> arguments = ParseArguments(args);
+
+    string? command = arguments["command"].ToString();
+    if (String.IsNullOrEmpty(command))
+    {
+
+    }
+
+    scenario.Years = (int)arguments["years"];
+    scenario.StartYear = (int)arguments["start"];
+    scenario.EndYear = (int)arguments["end"];
+    if (arguments.TryGetValue("portfolio", out var portfolio) &&
+        !string.IsNullOrEmpty(portfolio?.ToString()))
+    {
+        scenario.Portfolio = new Portfolio(portfolio.ToString()!);
+    }
+    else
+    {
+        // default to 100% US Stocks
+        scenario.Portfolio = new Portfolio("us_stocks:100;");
+    }
+    if (arguments.TryGetValue("inflation", out var inflationValue) &&
+        inflationValue is string inflationStr && !string.IsNullOrEmpty(inflationStr))
+    {
+        scenario.Inflation = inflationStr;
+    }
+    if (arguments.TryGetValue("withdrawalRate", out var wr))
+    {
+        scenario.WithdrawalRate = (float)wr;
+    }
+    if (arguments["fees"] != null)
+    {
+        // there is a default, 0.01
+        scenario.Fees = (float)arguments["fees"] / 100.0f;
+    }
+    if (arguments.TryGetValue("minimumWithdrawalPercent", out var minimumWithdrawalPercent))
+    {
+        scenario.MinimumWithdrawalPercent = (float)minimumWithdrawalPercent;
+    }
+    if (arguments.TryGetValue("limit", out var limit))
+    {
+        // there is a default, 95
+        scenario.SuccessRateLimit = (float)limit;
+    }
+    if (arguments.TryGetValue("rebalancing", out var rebalancingValue) &&
+        rebalancingValue is string rebalancingStr &&
+        Enum.TryParse(rebalancingStr, true, out Rebalancing rebalancing))
+    {
+        scenario.Rebalance = rebalancing;
+    }
+
+    scenario.Values = DataLoader.LoadValues(scenario.Portfolio.Allocations);
+    scenario.InflationData = DataLoader.LoadInflation(scenario.Values, scenario.Inflation);
+    bool r = scenario.PrepareExchangeRates("usd");
+
+    switch (command)
+    {
+        case "fixed":
+
+            //Console.WriteLine("Command \"fixed\"");
+            //Fixed f = new Fixed(args);
+            //f.LoadData();
+            Fixed.Simulate(scenario);
+            break;
+        case "swr":
+            //Swr swr = new Swr(args);
+            //swr.LoadData();
+            SafeWithdrawal.Simulate(scenario);
+            break;
+        case "multiple_wr":
+            MultipleWr.Simulate(scenario, scope.ServiceProvider);
+            break;
+        case "frequency":
+            Frequency.Simulate(scenario, 100, 1);
+            break;
+        case "failsafe":
+            Failsafe.Simulate(scenario);
+            break;
+        default:
+            Console.WriteLine("No command match to execute");
+            return;
+    }
 }
+catch (Exception ex)
+{
+    Log.Fatal(ex, "The application failed to start");
+}
+finally
+{
+    Log.CloseAndFlush(); // Ensure all logs are flushed before exit
+}
+
 
 
 

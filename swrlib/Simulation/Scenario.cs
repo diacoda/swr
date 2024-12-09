@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 using Swr.Data;
 using Swr.Investment;
@@ -5,7 +6,15 @@ namespace Swr.Simulation;
 
 public class Scenario
 {
-    public Scenario(Scenario s)
+    private readonly ILogger<Scenario> _logger;
+
+    public Scenario(ILogger<Scenario> logger)
+    {
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        Portfolio = new Portfolio("");
+    }
+
+    public void CopyFrom(Scenario s)
     {
         Portfolio = s.Portfolio;
         InflationData = s.InflationData;
@@ -49,11 +58,6 @@ public class Scenario
         SocialCoverage = s.SocialCoverage;
 
         StrictValidation = s.StrictValidation;
-    }
-
-    public Scenario()
-    {
-        Portfolio = new Portfolio("");
     }
 
     private const float MonthlyRebalancingCost = 0.005f;

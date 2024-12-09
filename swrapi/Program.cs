@@ -1,3 +1,4 @@
+using Swr.Simulation;
 using swrapi.Model;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -6,6 +7,8 @@ var builder = WebApplication.CreateBuilder(args);
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+builder.Services.AddTransient<Scenario>();
 
 var app = builder.Build();
 
@@ -18,9 +21,10 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-app.MapPost("/simulations", (SimulationRequest request) =>
+app.MapPost("/simulations", (SimulationRequest request,  ILogger<Scenario> logger) =>
 {
-    return Results.Ok(new SimulationResponse());
+    var scenario = request.ToScenario(logger);
+    return Microsoft.AspNetCore.Http.Results.Ok(new SimulationResponse());
 })
 .WithName("Simulations")
 .WithOpenApi();

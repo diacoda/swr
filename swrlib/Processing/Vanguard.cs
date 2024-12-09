@@ -1,23 +1,11 @@
+using Microsoft.Extensions.DependencyInjection;
 using Swr.Simulation;
 
 namespace Swr.Processing;
 
 public class Vanguard
 {
-    /*
-    else if (args[n] == "current") {
-            scenario.wmethod = swr::WithdrawalMethod::CURRENT;
-            scenario.minimum = 0.04f;
-        } else if (args[n] == "vanguard") {
-            scenario.wmethod = swr::WithdrawalMethod::VANGUARD;
-            scenario.minimum = 0.04f;
-        } else if (args[n] == "current3") {
-            scenario.wmethod = swr::WithdrawalMethod::CURRENT;
-            scenario.minimum = 0.03f;
-        } else if (args[n] == "vanguard3") {
-            scenario.wmethod = swr::WithdrawalMethod::VANGUARD;
-            scenario.minimum = 0.03f;*/
-    public static void Simulate(Scenario scenario)
+    public static void Simulate(Scenario scenario, IServiceProvider serviceProvider)
     {
         var wrValues = Enumerable.Range(0, 29).Select(i => 3.0f + i * 0.1f).ToList();
 
@@ -34,7 +22,11 @@ public class Vanguard
             var (wr, i) = tuple;
 
             // Copy the scenario for thread safety
-            Scenario s = new Scenario(scenario);
+            // Resolve a new Scenario from DI
+            using var scope = serviceProvider.CreateScope();
+            Scenario s = scope.ServiceProvider.GetRequiredService<Scenario>();
+
+            s.CopyFrom(scenario);
             s.WithdrawalRate = wr;
             // Update scenario for monthly simulation
             s.WithdrawFrequency = 1;

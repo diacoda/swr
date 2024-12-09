@@ -1,9 +1,10 @@
+using Microsoft.Extensions.DependencyInjection;
 using Swr.Simulation;
 
 namespace Swr.Processing;
 public class MultipleWr
 {
-    public static void Simulate(Scenario scenario)
+    public static void Simulate(Scenario scenario, IServiceProvider serviceProvider)
     {
         var wrValues = Enumerable.Range(0, 9).Select(i => 3.0f + i * 0.25f).ToList();
 
@@ -22,7 +23,11 @@ public class MultipleWr
             var (wr, i) = tuple;
 
             // Copy the scenario for thread safety
-            Scenario s = new Scenario(scenario);
+            // Resolve a new Scenario from DI
+            using var scope = serviceProvider.CreateScope();
+            Scenario s = scope.ServiceProvider.GetRequiredService<Scenario>();
+
+            s.CopyFrom(scenario);
             s.WithdrawalRate = wr;
             s.WithdrawFrequency = 12;
             // Run yearly simulation

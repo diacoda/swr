@@ -5,12 +5,12 @@ namespace swrapi.Model;
 
 public static class SimulationRequestExtensions
 {
-    public static Scenario ToScenario(this SimulationRequest request)
+    public static Scenario ToScenario(this SimulationRequest request, ILogger<Scenario> logger)
     {
         if (request == null)
             throw new ArgumentNullException(nameof(request));
 
-        Scenario scenario = new Scenario();
+        Scenario scenario = new Scenario(logger);
         scenario.Years = request.Years;
         scenario.StartYear = request.StartYear;
         scenario.EndYear = request.EndYear;

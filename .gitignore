@@ -5,6 +5,9 @@
 .vscode
 .vscode/*
 .DS_Store
+.logs
+logs/*
+
 # User-specific files
 *.rsuser
 *.suo
