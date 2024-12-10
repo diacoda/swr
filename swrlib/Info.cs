@@ -6,5 +6,8 @@ public class Info
     public int SimulationMonth { get; set; }
     public int ContextYear { get; set; }
     public int ContextMonth { get; set; }
-
+    public double ValueWithInflationAndExchangeRate { get; set; }
+    public double ValueAfterRebalance { get; set; }
+    public double ValuesAfterFees { get; set; }
+    public double ValuesAfterWithdrawal { get; set; }
 }

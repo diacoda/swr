@@ -696,13 +696,14 @@ public class Scenario
                             currentValues[i] *= exchangeRates[i].Current.Value;
                             exchangeRates[i].MoveNext();
                         }
-
+                        info.ValueWithInflationAndExchangeRate = Sum(currentValues);
                         // Handle failure scenarios
                         step(() => !IsFailure(context, currentValues.Sum()), res, currentYear, currentMonth, ref failure, context);
                         step(() => Glidepath(context, currentValues, N), res, currentYear, currentMonth, ref failure, context);
                         step(() => MonthlyRebalance(context, currentValues, N), res, currentYear, currentMonth, ref failure, context);
+                        info.ValueAfterRebalance = Sum(currentValues);
                         step(() => PayFees(context, currentValues, N), res, currentYear, currentMonth, ref failure, context);
-
+                        info.ValuesAfterFees = Sum(currentValues);
                         Debug.Assert(y == inflationVector.Current.Year && m == inflationVector.Current.Month, $"Inflation no match year:{y} month:{m} within current year: {currentYear} and current month: {currentMonth}");
                         double inflation = inflationVector.Current.Value;
                         inflationVector.MoveNext();
@@ -714,7 +715,7 @@ public class Scenario
 
                         // Perform withdrawals
                         step(() => Withdraw(context, currentValues, N), res, currentYear, currentMonth, ref failure, context);
-
+                        info.ValuesAfterWithdrawal = Sum(currentValues);
                         // Record withdrawal
                         if ((context.MonthIndex - 1) % 12 == 0)
                         {
@@ -724,6 +725,7 @@ public class Scenario
                         {
                             withdrawals.Last()[withdrawals.Last().Count - 1] += context.LastWithdrawalAmount;
                         }
+                        //_logger.LogInformation("{@Info}", info);
                     }
 
                     totalWithdrawn += context.YearWithdrawn;
@@ -751,8 +753,18 @@ public class Scenario
                         break;
                     }
                 }
+                Info2 info2 = new();
+                info2.Year = currentYear;
+                info2.Month = currentMonth;
+                info2.LastYear = info.ContextYear;
+                info2.LasttMonth = info.ContextMonth;
+                info2.Value = Sum(currentValues);
+                info2.IsSuccess = !failure;
 
-                double finalValue = failure ? 0.0 : currentValues.Sum();
+                _logger.LogInformation("{@Info2}", info2);
+
+                double finalValue = failure ? 0.0 : Sum(currentValues);
+                terminalValues.Add(finalValue);
 
                 if (!failure)
                 {
@@ -763,8 +775,6 @@ public class Scenario
                 {
                     res.Failures++;
                 }
-
-                terminalValues.Add(finalValue);
 
                 if (failure)
                 {
@@ -803,7 +813,7 @@ public class Scenario
         res.SuccessRate = 100.0f * (res.Successes / (float)(res.Successes + res.Failures));
         res.ComputeTerminalValues(terminalValues);
         res.ComputeWithdrawals(withdrawals, Years);
-
+        _logger.LogInformation("{@Results}", res);
         stopwatch.Stop();
 
         return res;

@@ -12,10 +12,11 @@ var logFilePath = "logs/swrconsole.log";
 // Configure Serilog
 Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Information() // Set minimum log level
-    .WriteTo.Console()          // Log to the console
+    .WriteTo.Console(outputTemplate: "{Message:lj}{NewLine}{Exception}")          // Log to the console
     .WriteTo.File(logFilePath,  // Log to a file
                   rollingInterval: RollingInterval.Day, // Roll logs daily
-                  retainedFileCountLimit: 7)           // Retain the last 7 log files
+                  retainedFileCountLimit: 7,
+                  outputTemplate: "{Message:lj}{NewLine}{Exception}")           // Retain the last 7 log files
     .CreateLogger();
 
 try
