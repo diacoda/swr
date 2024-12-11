@@ -606,7 +606,7 @@ public class Scenario
         int N = Portfolio.Allocations.Count();
 
         var res = new Results();
-        var stopwatch = Stopwatch.StartNew();
+        Stopwatch stopwatch = Stopwatch.StartNew();
 
         res = Validate();
         if (res.Error)
@@ -615,8 +615,10 @@ public class Scenario
             return res;
         }
 
+        // the final value after the simulation per year
         List<double> terminalValues = new List<double>();
-        List<List<double>> withdrawals = new List<List<double>>();
+        // total withdrawals per year, but not for failed ones
+        List<List<double>> yearlyWithdrawals = new List<List<double>>();
 
         // 3. Do the actual simulation
         for (int currentYear = StartYear; currentYear <= EndYear - Years; currentYear++)
@@ -627,7 +629,7 @@ public class Scenario
                 info.SimulationYear = currentYear;
                 info.SimulationMonth = currentMonth;
 
-                double totalWithdrawn = 0.0;
+                double totalWithdrawnPerYear = 0.0;
                 bool failure = false;
 
                 // Reset the allocation for the context
@@ -658,7 +660,7 @@ public class Scenario
                 }
 
                 // Add an empty list to the list of lists
-                withdrawals.Add(new List<double>());
+                yearlyWithdrawals.Add(new List<double>());
 
                 Context context = new Context();
                 context.MonthIndex = 1;
@@ -696,14 +698,18 @@ public class Scenario
                             currentValues[i] *= exchangeRates[i].Current.Value;
                             exchangeRates[i].MoveNext();
                         }
+
                         info.ValueWithInflationAndExchangeRate = Sum(currentValues);
+
                         // Handle failure scenarios
                         step(() => !IsFailure(context, currentValues.Sum()), res, currentYear, currentMonth, ref failure, context);
                         step(() => Glidepath(context, currentValues, N), res, currentYear, currentMonth, ref failure, context);
                         step(() => MonthlyRebalance(context, currentValues, N), res, currentYear, currentMonth, ref failure, context);
-                        info.ValueAfterRebalance = Sum(currentValues);
+                        info.ValueAfterMonthlyRebalance = Sum(currentValues);
+
                         step(() => PayFees(context, currentValues, N), res, currentYear, currentMonth, ref failure, context);
                         info.ValuesAfterFees = Sum(currentValues);
+
                         Debug.Assert(y == inflationVector.Current.Year && m == inflationVector.Current.Month, $"Inflation no match year:{y} month:{m} within current year: {currentYear} and current month: {currentMonth}");
                         double inflation = inflationVector.Current.Value;
                         inflationVector.MoveNext();
@@ -719,17 +725,19 @@ public class Scenario
                         // Record withdrawal
                         if ((context.MonthIndex - 1) % 12 == 0)
                         {
-                            withdrawals.Last().Add(context.LastWithdrawalAmount);
+                            yearlyWithdrawals.Last().Add(context.LastWithdrawalAmount);
                         }
                         else
                         {
-                            withdrawals.Last()[withdrawals.Last().Count - 1] += context.LastWithdrawalAmount;
+                            yearlyWithdrawals.Last()[yearlyWithdrawals.Last().Count - 1] += context.LastWithdrawalAmount;
                         }
                         //_logger.LogInformation("{@Info}", info);
                     }
 
-                    totalWithdrawn += context.YearWithdrawn;
+                    // logic for currentYear
+                    totalWithdrawnPerYear += context.YearWithdrawn;
                     step(() => YearlyRebalance(context, currentValues, N), res, currentYear, currentMonth, ref failure, context);
+                    info.ValueAfterYearlylyRebalance = Sum(currentValues);
 
                     if (failure)
                     {
@@ -753,15 +761,16 @@ public class Scenario
                         break;
                     }
                 }
+
                 Info2 info2 = new();
                 info2.Year = currentYear;
                 info2.Month = currentMonth;
                 info2.LastYear = info.ContextYear;
-                info2.LasttMonth = info.ContextMonth;
+                info2.LastMonth = info.ContextMonth;
                 info2.Value = Sum(currentValues);
                 info2.IsSuccess = !failure;
 
-                _logger.LogInformation("{@Info2}", info2);
+                //_logger.LogInformation("{@Info2}", info2);
 
                 double finalValue = failure ? 0.0 : Sum(currentValues);
                 terminalValues.Add(finalValue);
@@ -769,7 +778,7 @@ public class Scenario
                 if (!failure)
                 {
                     res.Successes++;
-                    res.WithdrawnPerYear += totalWithdrawn;
+                    res.AverageWithdrawnPerYear += totalWithdrawnPerYear;
                 }
                 else
                 {
@@ -778,7 +787,7 @@ public class Scenario
 
                 if (failure)
                 {
-                    withdrawals.RemoveAt(withdrawals.Count - 1);
+                    yearlyWithdrawals.RemoveAt(yearlyWithdrawals.Count - 1);
                 }
 
                 // Record periods
@@ -809,12 +818,14 @@ public class Scenario
             }
         }
         // Final metrics
-        res.WithdrawnPerYear = (res.WithdrawnPerYear / Years) / res.Successes;
+        res.AverageWithdrawnPerYear = (res.AverageWithdrawnPerYear / Years) / res.Successes;
         res.SuccessRate = 100.0f * (res.Successes / (float)(res.Successes + res.Failures));
         res.ComputeTerminalValues(terminalValues);
-        res.ComputeWithdrawals(withdrawals, Years);
+        res.ComputeWithdrawals(yearlyWithdrawals, Years);
         _logger.LogInformation("{@Results}", res);
+
         stopwatch.Stop();
+        TimeSpan elapsed = stopwatch.Elapsed;
 
         return res;
     }

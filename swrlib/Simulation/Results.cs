@@ -47,7 +47,7 @@ public class Results
     public int BestTvMonth { get; set; } = 0;
     public int BestTvYear { get; set; } = 0;
 
-    public double WithdrawnPerYear { get; set; } = 0.0;
+    public double AverageWithdrawnPerYear { get; set; } = 0.0;
 
     public string Message { get; set; } = string.Empty;
     public bool Error { get; set; } = false;

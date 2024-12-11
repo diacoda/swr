@@ -6,6 +6,6 @@ public class Info2
     public int Month { get; set; }
     public bool IsSuccess { get; set; }
     public int LastYear { get; set; }
-    public int LasttMonth { get; set; }
+    public int LastMonth { get; set; }
     public double Value { get; set; }
 }

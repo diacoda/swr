@@ -41,7 +41,7 @@ try
     }
 
     scenario.Years = 30;
-    scenario.StartYear = 1871;
+    scenario.StartYear = 1970;
     scenario.EndYear = 2023;
     scenario.Portfolio = new Portfolio("us_stocks_orig:100;");
     scenario.Inflation = "us_inflation";

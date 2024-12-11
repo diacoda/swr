@@ -1,4 +1,6 @@
-﻿// See https://aka.ms/new-console-template for more information
+﻿using System;
+using System.Globalization;
+using System.IO;
 using Swr.Data;
 using Swr.Investment;
 using Swr.Simulation;
@@ -25,30 +27,54 @@ try
         .ConfigureServices((context, services) =>
         {
             services.AddTransient<Scenario>(); // Register Scenario for DI
+            services.AddTransient<Testing>();
         })
         .Build();
 
-    // Resolve Scenario using DI
-    using var scope = host.Services.CreateScope(); // Create a scope for resolving services
-    var serviceProvider = scope.ServiceProvider;
-    Scenario scenario = scope.ServiceProvider.GetRequiredService<Scenario>();
+    // Input file path (update this as per your file location)
+    string inputFilePath = "../stock-data/cpi.csv";
+    string outputFilePath = "../stock-data/transformed_cpi.csv";
 
-    Portfolio portfolio = new Portfolio("us_stocks:50;us_stocks_orig:50");
-    scenario.Portfolio = portfolio;
-    scenario.Values = DataLoader.LoadValues(scenario.Portfolio.Allocations);
-    foreach (DataVector dv in scenario.Values)
+    // Read all lines from the input file
+    string[] lines = File.ReadAllLines(inputFilePath);
+
+    // Create the output file and write the header
+    using (StreamWriter writer = new StreamWriter(outputFilePath))
     {
-        string fileName = $"{dv.Name}.txt"; // Create a file name based on the DataVector's Name
-        using (StreamWriter writer = new StreamWriter(fileName))
+        bool first = true;
+        double oldValue = 0;
+        foreach (string line in lines)
         {
-            foreach (Item item in dv.Data)
+            // Skip empty lines
+            if (string.IsNullOrWhiteSpace(line)) continue;
+
+            // Split the line into date fraction and value
+            string[] parts = line.Split(new[] { '\t', ' ' }, StringSplitOptions.RemoveEmptyEntries);
+
+            if (parts.Length != 2) continue; // Skip malformed lines
+
+            // Parse date fraction and value
+            string[] dates = parts[0].Split('.', StringSplitOptions.RemoveEmptyEntries);
+            int year = int.Parse(dates[0]);
+            int month = int.Parse(dates[1]);
+            double value = double.Parse(parts[1], CultureInfo.InvariantCulture);
+            double inflation;
+            if (first)
             {
-                // Assuming `Item` has properties like `Month`, `Year`, and `Value`
-                writer.WriteLine($"{item.Month},{item.Year},{item.Value}");
+                first = false;
+                inflation = 1;
             }
+            else
+            {
+                inflation = (value - oldValue) / oldValue * 100;
+            }
+            oldValue = value;
+            // Write the transformed data to the output file
+            writer.WriteLine($"{month},{year},{inflation:F2}");
         }
     }
 
+    Console.WriteLine($"Transformed data saved to {outputFilePath}");
 }
 catch (Exception ex)
 {
