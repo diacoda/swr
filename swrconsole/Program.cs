@@ -41,9 +41,9 @@ try
     }
 
     scenario.Years = 30;
-    scenario.StartYear = 1970;
+    scenario.StartYear = 1928;
     scenario.EndYear = 2023;
-    scenario.Portfolio = new Portfolio("us_stocks_orig:100;");
+    scenario.Portfolio = new Portfolio("us_monthly3:100;");
     scenario.Inflation = "us_inflation";
     scenario.WithdrawFrequency = 1;
     scenario.WithdrawalMethod = WithdrawalMethod.STANDARD;

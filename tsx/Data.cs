@@ -11,14 +11,14 @@ public class Data
 
         string tickerSymbol = "^GSPC";
 
-        DateTime startDate = new DateTime(1970, 1, 1);
+        DateTime startDate = new DateTime(1871, 1, 1);
         DateTime endDate = DateTime.Now;
 
         var yahooFinanceApi = new YahooClient();
         var historicalData = await yahooFinanceApi.GetHistoricalDataAsync(tickerSymbol, DataFrequency.Daily, startDate, endDate);
 
         // Define the file path
-        string filePath = "../stock-data/us_monthly.csv";
+        string filePath = "../../../../stock-data/us_monthly3.csv";
         if (historicalData != null && historicalData.Count() > 0)
         {
             List<Item> itemizedData = new List<Item>();

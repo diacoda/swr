@@ -1,6 +1,6 @@
 ﻿// See https://aka.ms/new-console-template for more information
 
-
+await Data.GetData();
 string inputFilePath = "../stock-data/us_stocks.txt"; // Path to your positional file
 string outputFilePath = "../stock-data/us_stocks.csv"; // Path for the output CSV file
 

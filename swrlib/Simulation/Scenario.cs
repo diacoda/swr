@@ -77,7 +77,7 @@ public class Scenario
     public int EndYear { get; set; }
     // success rate limit for finding safw withdrawal rate, the success rate must be bigger than this rate
     public float SuccessRateLimit { get; set; } = 95.0f;
-    public float InitialValue { get; set; } = 1000.0f;
+    public float InitialValue { get; set; } = 10000.0f;
     public int WithdrawFrequency { get; set; } = 1;
     public Rebalancing Rebalance { get; set; } = Rebalancing.NONE;
     public float RebalancingThreshold { get; set; } = 0.01f;
