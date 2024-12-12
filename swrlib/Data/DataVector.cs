@@ -78,7 +78,7 @@ public class DataVector : IEnumerable<Item>
             {
                 int month = int.Parse(values[0]);
                 int year = int.Parse(values[1]);
-                double value = double.Parse(values[2]);
+                float value = float.Parse(values[2]);
 
                 var dataItem = new Item(month, year, value);
                 Data.Add(dataItem);
@@ -117,12 +117,12 @@ public class DataVector : IEnumerable<Item>
             return;
         }
 
-        double previousValue = Data[0].Value;
-        Data[0].Value = 1.0;
+        float previousValue = Data[0].Value;
+        Data[0].Value = 1.0f;
 
         for (int i = 1; i < Data.Count; i++)
         {
-            double currentValue = Data[i].Value;
+            float currentValue = Data[i].Value;
             Data[i].Value = Data[i - 1].Value * (currentValue / previousValue);
             previousValue = currentValue;
         }
@@ -133,11 +133,11 @@ public class DataVector : IEnumerable<Item>
     {
         if (Data.Count == 0) return;
 
-        double previousValue = Data[0].Value;
+        float previousValue = Data[0].Value;
 
         for (int i = 1; i < Data.Count; i++)
         {
-            double newValue = Data[i].Value / previousValue;
+            float newValue = Data[i].Value / previousValue;
             previousValue = Data[i].Value;
             Data[i].Value = newValue;
         }

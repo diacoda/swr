@@ -9,17 +9,17 @@ public class Results
     public ulong Failures { get; set; } = 0;
     public float SuccessRate { get; set; } = 0.0f;
 
-    public double TerminalValueAverage { get; set; } = 0.0;
-    public double TerminalValueMinimum { get; set; } = 0.0;
-    public double TerminalValueMaximum { get; set; } = 0.0;
-    public double TerminalValueMedian { get; set; } = 0.0;
+    public float TerminalValueAverage { get; set; } = 0.0f;
+    public float TerminalValueMinimum { get; set; } = 0.0f;
+    public float TerminalValueMaximum { get; set; } = 0.0f;
+    public float TerminalValueMedian { get; set; } = 0.0f;
 
     public float WithdrawalRate { get; set; } = 0.0f;
     public WithdrawalMethod WithdrawalMethod { get; set; } = WithdrawalMethod.STANDARD;
-    public double WithdrawalAverage { get; set; } = 0.0;
-    public double WithdrawalMinimum { get; set; } = 0.0;
-    public double WithdrawalMaximum { get; set; } = 0.0;
-    public double WithdrawalMedian { get; set; } = 0.0;
+    public float WithdrawalAverage { get; set; } = 0.0f;
+    public float WithdrawalMinimum { get; set; } = 0.0f;
+    public float WithdrawalMaximum { get; set; } = 0.0f;
+    public float WithdrawalMedian { get; set; } = 0.0f;
 
     public int YearsLargeWithdrawal { get; set; } = 0;
     public int YearsSmallWithdrawal { get; set; } = 0;
@@ -33,21 +33,21 @@ public class Results
     public int LowestEffWrYear { get; set; } = 0;
     public int LowestEffWrStartYear { get; set; } = 0;
     public int LowestEffWrStartMonth { get; set; } = 0;
-    public double LowestEffWr { get; set; } = 0.0;
+    public float LowestEffWr { get; set; } = 0.0f;
 
     public int HighestEffWrYear { get; set; } = 0;
     public int HighestEffWrStartYear { get; set; } = 0;
     public int HighestEffWrStartMonth { get; set; } = 0;
-    public double HighestEffWr { get; set; } = 0.0;
+    public float HighestEffWr { get; set; } = 0.0f;
 
-    public double WorstTv { get; set; } = 0;
+    public float WorstTv { get; set; } = 0.0f;
     public int WorstTvMonth { get; set; } = 0;
     public int WorstTvYear { get; set; } = 0;
-    public double BestTv { get; set; } = 0;
+    public float BestTv { get; set; } = 0.0f;
     public int BestTvMonth { get; set; } = 0;
     public int BestTvYear { get; set; } = 0;
 
-    public double AverageWithdrawnPerYear { get; set; } = 0.0;
+    public float AverageWithdrawnPerYear { get; set; } = 0.0f;
 
     public string Message { get; set; } = string.Empty;
     public bool Error { get; set; } = false;
@@ -73,7 +73,7 @@ public class Results
     }
 
     // Methods
-    public void ComputeTerminalValues(List<double> terminalValues)
+    public void ComputeTerminalValues(List<float> terminalValues)
     {
         // Sort terminal values
         terminalValues.Sort();
@@ -85,9 +85,9 @@ public class Results
         TerminalValueAverage = terminalValues.Sum() / terminalValues.Count;
     }
 
-    public void ComputeWithdrawals(List<List<double>> yearlyWithdrawals, int years)
+    public void ComputeWithdrawals(List<List<float>> yearlyWithdrawals, int years)
     {
-        var withdrawals = new List<double>();
+        var withdrawals = new List<float>();
 
         // Process yearly withdrawals
         foreach (var yearly in yearlyWithdrawals)

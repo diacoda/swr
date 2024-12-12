@@ -7,6 +7,13 @@ using Swr.Processing;
 using Swr.Simulation;
 using Microsoft.Extensions.DependencyInjection;
 
+float fees = 0.03f;
+double v = 1;
+v *= 1.0f - (fees / 12.0f);
+
+float f = 1f;
+f *= 1.0f - (fees / 12.0f);
+
 var logFilePath = "logs/swrconsole.log";
 
 // Configure Serilog
@@ -51,7 +58,7 @@ try
     scenario.Fees = 0.003f;
     scenario.MinimumWithdrawalPercent = 0.03f;
     scenario.AdjustRemainingWithInflation = true;
-    scenario.PercentageRemaining = 0.1f;
+    scenario.PercentageRemainingTarget = 0.1f;
     scenario.CashSimple = false;
     scenario.InitialCash = 0;
     //scenario.CashSimple = true;

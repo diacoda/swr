@@ -47,7 +47,7 @@ public class Scenario
         CashSimple = s.CashSimple;
 
         Inflation = s.Inflation;
-        PercentageRemaining = s.PercentageRemaining;
+        PercentageRemainingTarget = s.PercentageRemainingTarget;
         AdjustRemainingWithInflation = s.AdjustRemainingWithInflation;
 
         UseGlidepath = s.UseGlidepath;
@@ -61,9 +61,9 @@ public class Scenario
         StrictValidation = s.StrictValidation;
     }
 
-    private const float MonthlyRebalancingCost = 0.005f;
-    private const float YearlyRebalancingCost = 0.01f;
-    private const float ThresholdRebalancingCost = 0.01f;
+    private const float _monthlyRebalancingCost = 0.005f;
+    private const float _yearlyRebalancingCost = 0.01f;
+    private const float _thresholdRebalancingCost = 0.01f;
 
     public Investment.Portfolio Portfolio { get; set; }
     public DataVector InflationData { get; set; } = new DataVector("Inflation");
@@ -96,7 +96,7 @@ public class Scenario
     public string Inflation { get; set; } = "no-inflation";
     // the percentage from the initial value that must remain after withdrawals
     // if the current value is below, then the simulation fails as it is not able to finish abive the percentage remaining threshold
-    public float PercentageRemaining { get; set; } = 0.01f;
+    public float PercentageRemainingTarget { get; set; } = 0.01f;
     // adjust the initial value with inflation, such that at the end of the simulation, the value is more realistic 
     public bool AdjustRemainingWithInflation { get; set; } = true;
 
@@ -122,17 +122,17 @@ public class Scenario
         if (AdjustRemainingWithInflation)
         {
             // target value is adjusted with inflation
-            return currentValue <= PercentageRemaining * context.TargetValue;
+            return currentValue <= PercentageRemainingTarget * context.FinalRemainingTarget;
         }
         else
         {
-            return currentValue <= PercentageRemaining * InitialValue;
+            return currentValue <= PercentageRemainingTarget * InitialValue;
         }
     }
 
-    private double Sum(List<double> currentValues)
+    private float Sum(List<float> currentValues)
     {
-        double value = 0.0;
+        float value = 0.0f;
         foreach (float currentValue in currentValues)
         {
             value += currentValue;
@@ -140,7 +140,7 @@ public class Scenario
         return value;
     }
 
-    private bool PayFees(Context context, List<double> currentValues, int N)
+    private bool PayFees(Context context, List<float> currentValues, int N)
     {
         if (currentValues.Count != N)
         {
@@ -164,7 +164,7 @@ public class Scenario
         return true;
     }
 
-    private bool Glidepath(Context context, List<double> currentValues, int N)
+    private bool Glidepath(Context context, List<float> currentValues, int N)
     {
         if (UseGlidepath)
         {
@@ -196,10 +196,10 @@ public class Scenario
                 // Pay the fees
                 for (int i = 0; i < N; i++)
                 {
-                    currentValues[i] *= 1.0f - MonthlyRebalancingCost / 100.0f;
+                    currentValues[i] *= 1.0f - _monthlyRebalancingCost / 100.0f;
                 }
 
-                double totalValue = Sum(currentValues);
+                float totalValue = Sum(currentValues);
 
                 // Fees can cause failure
                 if (IsFailure(context, totalValue))
@@ -216,7 +216,7 @@ public class Scenario
         return true;
     }
 
-    private bool MonthlyRebalance(Context context, List<double> currentValues, int N)
+    private bool MonthlyRebalance(Context context, List<float> currentValues, int N)
     {
         // Nothing to rebalance if we have a single asset
         if (N == 1)
@@ -224,16 +224,17 @@ public class Scenario
             return true;
         }
 
+        float totalValue = 0f;
         // Monthly Rebalance if necessary
         if (Rebalance == Rebalancing.MONTHLY)
         {
             // Pay the fees
             for (int i = 0; i < N; i++)
             {
-                currentValues[i] *= 1.0f - MonthlyRebalancingCost / 100.0f;
+                currentValues[i] *= 1.0f - _monthlyRebalancingCost / 100.0f;
             }
 
-            double totalValue = Sum(currentValues);
+            totalValue = Sum(currentValues);
 
             // Fees can cause failure
             if (IsFailure(context, totalValue))
@@ -251,7 +252,7 @@ public class Scenario
         if (Rebalance == Rebalancing.THRESHOLD)
         {
             bool rebalance = false;
-            double totalValue = Sum(currentValues);
+            totalValue = Sum(currentValues);
             for (int i = 0; i < N; i++)
             {
                 if (Math.Abs((Portfolio.Allocations[i].AllocationCurrent / 100.0f) - currentValues[i] / totalValue) >= RebalancingThreshold)
@@ -266,7 +267,7 @@ public class Scenario
                 // Pay the fees
                 for (int i = 0; i < N; i++)
                 {
-                    currentValues[i] *= 1.0f - ThresholdRebalancingCost / 100.0f;
+                    currentValues[i] *= 1.0f - _thresholdRebalancingCost / 100.0f;
                 }
 
                 // We need to recompute the total value after the fees
@@ -287,7 +288,7 @@ public class Scenario
         return true;
     }
 
-    private bool YearlyRebalance(Context context, List<double> currentValues, int N)
+    private bool YearlyRebalance(Context context, List<float> currentValues, int N)
     {
         // Nothing to rebalance if we have a single asset
         if (N == 1)
@@ -301,10 +302,10 @@ public class Scenario
             // Pay the fees
             for (int i = 0; i < N; i++)
             {
-                currentValues[i] *= 1.0f - YearlyRebalancingCost / 100.0f;
+                currentValues[i] *= 1.0f - _yearlyRebalancingCost / 100.0f;
             }
 
-            double totalValue = Sum(currentValues);
+            float totalValue = Sum(currentValues);
 
             // Fees can cause failure
             if (IsFailure(context, totalValue))
@@ -332,13 +333,13 @@ public class Scenario
     /// True if the withdrawal was successful, or the portfolio remains viable; 
     /// False if the withdrawal leads to failure (e.g., depleting resources).
     /// </returns>
-    private bool Withdraw(Context context, List<double> currentValues, int N)
+    private bool Withdraw(Context context, List<float> currentValues, int N)
     {
         // Perform withdrawals only at specified intervals based on WithdrawFrequency.
         if ((context.MonthIndex - 1) % WithdrawFrequency == 0)
         {
             // Calculate the total portfolio value.
-            double totalValue = Sum(currentValues);
+            float totalValue = Sum(currentValues);
 
             // Determine the number of withdrawal periods remaining.
             int periods = WithdrawFrequency;
@@ -347,7 +348,7 @@ public class Scenario
                 periods = context.TotalMonths - (context.MonthIndex - 1);
             }
 
-            double withdrawalAmount = 0;
+            float withdrawalAmount = 0f;
 
             // Compute the withdrawal amount based on the withdrawal strategy
             if (WithdrawalMethod == WithdrawalMethod.STANDARD)
@@ -358,9 +359,9 @@ public class Scenario
             else if (WithdrawalMethod == WithdrawalMethod.CURRENT)
             {
                 // Percentage-based withdrawal tied to the current portfolio value.
-                withdrawalAmount = (totalValue * (WithdrawalRate / 100.0)) / (12.0 / periods);
+                withdrawalAmount = (totalValue * (WithdrawalRate / 100.0f)) / (12.0f / periods);
                 // Ensure the withdrawal does not fall below the specified minimum.
-                double minimumWithdrawal = context.MinimumWithdrawal / (12.0 / periods);
+                float minimumWithdrawal = context.MinimumWithdrawal / (12.0f / periods);
 
                 if (withdrawalAmount < minimumWithdrawal)
                 {
@@ -373,7 +374,7 @@ public class Scenario
                 if (context.MonthIndex == 1)
                 {
                     // Fisrt year: initialize Vanguard withdrawal
-                    context.VanguardWithdrawal = totalValue * (WithdrawalRate / 100.0);
+                    context.VanguardWithdrawal = totalValue * (WithdrawalRate / 100.0f);
                     context.LastYearWithdrawal = context.VanguardWithdrawal;
                 }
                 else if ((context.MonthIndex - 1) % 12 == 0)
@@ -393,10 +394,10 @@ public class Scenario
                     }
                 }
                 // Adjust withdrawal to a periodic base
-                withdrawalAmount = context.VanguardWithdrawal / (12.0 / periods);
+                withdrawalAmount = context.VanguardWithdrawal / (12.0f / periods);
 
                 // Ensure a minimum withdrawal amount is maintained.
-                double minimumWithdrawal = context.MinimumWithdrawal / (12.0 / periods);
+                float minimumWithdrawal = context.MinimumWithdrawal / (12.0f / periods);
                 if (withdrawalAmount < minimumWithdrawal)
                 {
                     withdrawalAmount = minimumWithdrawal;
@@ -406,7 +407,7 @@ public class Scenario
             // Adjust withdrawal based on social security coverage if applicable.
             if (UseSocialSecurity)
             {
-                if ((context.MonthIndex / 12.0) >= SocialDelay)
+                if ((context.MonthIndex / 12.0f) >= SocialDelay)
                 {
                     withdrawalAmount -= (SocialCoverage * withdrawalAmount);
                 }
@@ -419,7 +420,7 @@ public class Scenario
                 return true;
             }
             // Calculate the effective withdrawal rate.
-            double effectiveWithdrawalRate = withdrawalAmount / context.YearStartValue;
+            float effectiveWithdrawalRate = withdrawalAmount / context.YearStartValue;
 
             // Strategies with cash or effective withdrawal rate is greater than the monthly WithdrawalRate
             // withdrawing from cash if the effective rate exceeds the target monthly rate.
@@ -432,7 +433,7 @@ public class Scenario
                     {
                         context.YearWithdrawn += withdrawalAmount;
                         context.Cash -= withdrawalAmount;
-                        withdrawalAmount = 0;
+                        withdrawalAmount = 0.0f;
                     }
                     else
                     {
@@ -445,8 +446,8 @@ public class Scenario
             // Adjust each portfolio value proportionally to account for the withdrawal.
             for (int i = 0; i < currentValues.Count; i++)
             {
-                double proportion = currentValues[i] / totalValue;
-                double withdrawal = proportion * withdrawalAmount;
+                float proportion = currentValues[i] / totalValue;
+                float withdrawal = proportion * withdrawalAmount;
                 currentValues[i] = Math.Max(0.0f, currentValues[i] - withdrawal);
             }
             // Check for portfolio failure after the withdrawal
@@ -616,9 +617,9 @@ public class Scenario
         }
 
         // the final value after the simulation per year
-        List<double> terminalValues = new List<double>();
+        List<float> terminalValues = new List<float>();
         // total withdrawals per year, but not for failed ones
-        List<List<double>> yearlyWithdrawals = new List<List<double>>();
+        List<List<float>> yearlyWithdrawals = new List<List<float>>();
 
         // 3. Do the actual simulation
         for (int currentYear = StartYear; currentYear <= EndYear - Years; currentYear++)
@@ -629,7 +630,7 @@ public class Scenario
                 info.SimulationYear = currentYear;
                 info.SimulationMonth = currentMonth;
 
-                double totalWithdrawnPerYear = 0.0;
+                float totalWithdrawnPerYear = 0.0f;
                 bool failure = false;
 
                 // Reset the allocation for the context
@@ -643,7 +644,7 @@ public class Scenario
                 IEnumerator<Item> inflationVector = dv.GetEnumerator();
                 inflationVector.MoveNext();
 
-                List<double> currentValues = new List<double>(new double[N]);
+                List<float> currentValues = new List<float>(new float[N]);
                 List<IEnumerator<Item>> returns = new List<IEnumerator<Item>>(N);
                 List<IEnumerator<Item>> exchangeRates = new List<IEnumerator<Item>>(N);
                 for (int i = 0; i < N; i++)
@@ -660,7 +661,7 @@ public class Scenario
                 }
 
                 // Add an empty list to the list of lists
-                yearlyWithdrawals.Add(new List<double>());
+                yearlyWithdrawals.Add(new List<float>());
 
                 Context context = new Context();
                 context.MonthIndex = 1;
@@ -672,7 +673,7 @@ public class Scenario
                 // The amount of cash available
                 context.Cash = InitialCash;
                 // Used for the target threshold
-                context.TargetValue = InitialValue;
+                context.FinalRemainingTarget = InitialValue;
 
                 int endYear = currentYear + (currentMonth - 1 + context.TotalMonths - 1) / 12;
                 int endMonth = 1 + (currentMonth - 1 + (context.TotalMonths - 1) % 12) % 12;
@@ -680,7 +681,7 @@ public class Scenario
                 for (int y = currentYear; y <= endYear; y++)
                 {
                     context.YearStartValue = currentValues.Sum();
-                    context.YearWithdrawn = 0.0;
+                    context.YearWithdrawn = 0.0f;
 
                     for (int m = y == currentYear ? currentMonth : 1; !failure && m <= (y == endYear ? endMonth : 12); m++, context.MonthIndex++)
                     {
@@ -711,13 +712,13 @@ public class Scenario
                         info.ValuesAfterFees = Sum(currentValues);
 
                         Debug.Assert(y == inflationVector.Current.Year && m == inflationVector.Current.Month, $"Inflation no match year:{y} month:{m} within current year: {currentYear} and current month: {currentMonth}");
-                        double inflation = inflationVector.Current.Value;
+                        float inflation = inflationVector.Current.Value;
                         inflationVector.MoveNext();
 
                         // Adjust withdrawals for inflation
                         context.Withdrawal *= inflation;
                         context.MinimumWithdrawal *= inflation;
-                        context.TargetValue *= inflation;
+                        context.FinalRemainingTarget *= inflation;
 
                         // Perform withdrawals
                         step(() => Withdraw(context, currentValues, N), res, currentYear, currentMonth, ref failure, context);
@@ -741,7 +742,7 @@ public class Scenario
 
                     if (failure)
                     {
-                        double effectiveWithdrawalRate = context.YearWithdrawn / context.YearStartValue;
+                        float effectiveWithdrawalRate = context.YearWithdrawn / context.YearStartValue;
 
                         if (res.LowestEffWrYear == 0 || effectiveWithdrawalRate < res.LowestEffWr)
                         {
@@ -772,7 +773,7 @@ public class Scenario
 
                 //_logger.LogInformation("{@Info2}", info2);
 
-                double finalValue = failure ? 0.0 : Sum(currentValues);
+                float finalValue = failure ? 0.0f : Sum(currentValues);
                 terminalValues.Add(finalValue);
 
                 if (!failure)

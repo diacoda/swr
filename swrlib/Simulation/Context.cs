@@ -1,19 +1,19 @@
 namespace Swr.Simulation;
 public class Context
 {
-    public double TargetValue { get; set; } = 0.0f;
+    public float FinalRemainingTarget { get; set; } = 0.0f;
 
-    public double VanguardWithdrawal { get; set; } = 0.0;
-    public double LastYearWithdrawal { get; set; } = 0.0;
+    public float VanguardWithdrawal { get; set; } = 0.0f;
+    public float LastYearWithdrawal { get; set; } = 0.0f;
 
-    public double Cash { get; set; } = 0.0;
-    public double MinimumWithdrawal { get; set; } = 0.0;
+    public float Cash { get; set; } = 0.0f;
+    public float MinimumWithdrawal { get; set; } = 0.0f;
 
-    public double YearStartValue { get; set; } = 0.0;
-    public double YearWithdrawn { get; set; } = 0.0;
-    public double LastWithdrawalAmount { get; set; } = 0.0;
+    public float YearStartValue { get; set; } = 0.0f;
+    public float YearWithdrawn { get; set; } = 0.0f;
+    public float LastWithdrawalAmount { get; set; } = 0.0f;
 
-    public double Withdrawal { get; set; } = 0.0f;
+    public float Withdrawal { get; set; } = 0.0f;
 
     public int MonthIndex { get; set; } = 0;
     public int TotalMonths { get; set; } = 0;
