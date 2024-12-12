@@ -7,13 +7,6 @@ using Swr.Processing;
 using Swr.Simulation;
 using Microsoft.Extensions.DependencyInjection;
 
-float fees = 0.03f;
-double v = 1;
-v *= 1.0f - (fees / 12.0f);
-
-float f = 1f;
-f *= 1.0f - (fees / 12.0f);
-
 var logFilePath = "logs/swrconsole.log";
 
 // Configure Serilog
