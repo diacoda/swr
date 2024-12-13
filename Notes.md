@@ -9,3 +9,7 @@ number of years
 portfolio weights and allocations
 withdrawal patterns
 final asset target value
+
+RealTR(n) = RealTR(n-1) x [(RealPrice(n)+ Dividend(n)/12)]/RealPrice(n-1)
+
+How can I transform monthly index historical prices into monthly historical real returns. I have monthly historical  prices, dividends, earnings, CPI. An example would be good, using US and S&P 500...
