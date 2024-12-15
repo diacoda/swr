@@ -26,14 +26,13 @@ try
         .UseSerilog() // Use Serilog as the logging provider
         .ConfigureServices((context, services) =>
         {
-            services.AddTransient<Scenario>(); // Register Scenario for DI
+            services.AddTransient<Scenario>();
+            services.AddScoped<Scenario>();
         })
         .Build();
 
     // Resolve Scenario using DI
-    using var scope = host.Services.CreateScope(); // Create a scope for resolving services
-    var serviceProvider = scope.ServiceProvider;
-    Scenario scenario = scope.ServiceProvider.GetRequiredService<Scenario>();
+    Scenario scenario = host.Services.GetRequiredService<Scenario>();
 
     if (args.Length == 0)
     {
@@ -41,9 +40,10 @@ try
     }
 
     scenario.Years = 30;
-    scenario.StartYear = 1871;
+    scenario.StartYear = 1971;
     scenario.EndYear = 2023;
-    scenario.Portfolio = new Portfolio("us_stocks_n:100;");
+    scenario.Portfolio = new Portfolio("us_stocks_n:85;ca_stocks:15");
+    //scenario.Portfolio = new Portfolio("us_stocks_n:100");
     scenario.Inflation = "us_inflation";
     scenario.WithdrawFrequency = 1;
     scenario.WithdrawalMethod = WithdrawalMethod.STANDARD;
@@ -59,16 +59,16 @@ try
 
     scenario.Values = DataLoader.LoadValues(scenario.Portfolio.Allocations);
     scenario.InflationData = DataLoader.LoadInflation(scenario.Values, scenario.Inflation);
-    bool r3 = scenario.PrepareExchangeRates("usd");
+    bool r3 = scenario.PrepareExchangeRates("cad");
     Fixed.Simulate(scenario);
 
-    Vanguard.Simulate(scenario, scope.ServiceProvider);
+    Vanguard.Simulate(scenario, host.Services);
 
     scenario.WithdrawalMethod = WithdrawalMethod.CURRENT;
-    Vanguard.Simulate(scenario, scope.ServiceProvider);
+    Vanguard.Simulate(scenario, host.Services);
 
     scenario.WithdrawalMethod = WithdrawalMethod.VANGUARD;
-    Vanguard.Simulate(scenario, scope.ServiceProvider);
+    Vanguard.Simulate(scenario, host.Services);
 
     Dictionary<string, object> arguments = ParseArguments(args);
 
@@ -140,7 +140,7 @@ try
             SafeWithdrawal.Simulate(scenario);
             break;
         case "multiple_wr":
-            MultipleWr.Simulate(scenario, scope.ServiceProvider);
+            MultipleWr.Simulate(scenario, host.Services);
             break;
         case "frequency":
             Frequency.Simulate(scenario, 100, 1);
@@ -204,121 +204,3 @@ static Dictionary<string, object> ParseArguments(string[] args)
 
     return result;
 }
-/* List<float> v = Enumerable.Range(1, 10).Select(i => (float)i).ToList();
-IEnumerable<float> result = v.Skip(4);
-List<float> resultList = v.SkipWhile(value => value != 4.0f).ToList();
- */
-/*
-var portfolioString = "us_stocks:100;us_bonds:40;";
-var allowZero = false;
-
-Portfolio p = new Portfolio(portfolioString);
-p.NormalizePortfolio();
-
-
-var exchangeData = DataLoader.LoadExchange("usd_cad");
-Console.WriteLine("Exchange Data:");
-foreach (var data in exchangeData)
-{
-    Console.WriteLine($"Month: {data.Month}, Year: {data.Year}, Value: {data.Value}");
-}
-
-var exchangeInvData = DataLoader.LoadExchangeInv("usd_cad");
-Console.WriteLine("Exchange Data Inv:");
-foreach (var data in exchangeInvData)
-{
-    Console.WriteLine($"Month: {data.Month}, Year: {data.Year}, Value: {data.Value}");
-}
-
-// See https://aka.ms/new-console-template for more information
-Console.WriteLine("Hello, World!");
-var portfolio = new List<Allocation>
-{
-    new Allocation { Asset = "cash2", AllocationValue = 0.5f },
-    new Allocation { Asset = "cash2_x2", AllocationValue = 0.5f }
-};
-
-var values = DataLoader.LoadValues(portfolio);
-foreach (var vector in values)
-{
-    Console.WriteLine($"Data for {vector.Name}:");
-    foreach (var data in vector)
-    {
-        Console.WriteLine(data);
-    }
-}
-
-//var inflationData = PortfolioLoader.LoadInflation(values, "no_inflation");
-var inflationData = DataLoader.LoadInflation(values, "us_inflation");
-Console.WriteLine("Inflation Data:");
-foreach (var data in inflationData)
-{
-    Console.WriteLine($"Month: {data.Month}, Year: {data.Year}, Value: {data.Value}");
-}
-
-// Create a DataVector object
-var dataVector = new DataVector("cash");
-dataVector.LoadDataFromCsv("../../../../stock-data/cash2.csv");
-foreach (var data in dataVector.Data)
-{
-    Console.WriteLine($"Month: {data.Month}, Year: {data.Year}, Value: {data.Value}");
-}
-dataVector.NormalizeData();
-foreach (var data in dataVector.Data)
-{
-    Console.WriteLine($"Month: {data.Month}, Year: {data.Year}, Value: {data.Value}");
-}
-float? v = dataVector.GetValue(1871, 4);
-Console.WriteLine(v);
-
-int index = dataVector.GetIndex(1871, 4);
-Console.WriteLine(index);
-
-DataVector dv2 = dataVector.GetDataVector(1871, 4);
-foreach (var data in dv2.Data)
-{
-    Console.WriteLine($"Month: {data.Month}, Year: {data.Year}, Value: {data.Value}");
-}
-
-// Add some data
-//dataVector.AddData(new Data(1, 2023, 99.9f));
-//dataVector.AddData(new Data(2, 2023, 101.5f));
-//dataVector.AddData(new Data(3, 2023, 120.9f));
-//dataVector.AddData(new Data(4, 2023, 115.5f));
-
-// Access the name
-Console.WriteLine($"DataVector Name: {dataVector.Name}");
-
-// Iterate through the data
-foreach (var data in dataVector.Data)
-{
-    Console.WriteLine($"Month: {data.Month}, Year: {data.Year}, Value: {data.Value}");
-}
-
-// Using AsEnumerable method
-IEnumerable<Data> enumerableData = dataVector.AsEnumerable();
-
-// Using LINQ to filter and print data
-var filteredData = enumerableData.Where(d => d.Value > 120);
-foreach (var dataItem in filteredData)
-{
-    Console.WriteLine(dataItem);
-}
-
-// Using GetEnumerator method
-IEnumerator<Data> enumerator = dataVector.GetEnumerator();
-while (enumerator.MoveNext())
-{
-    Data dataItem = enumerator.Current;
-    Console.WriteLine(dataItem);
-}
-
-// Using GetReadOnlyEnumerator method
-IEnumerator<Data> readOnlyEnumerator = dataVector.GetReadOnlyEnumerator();
-while (readOnlyEnumerator.MoveNext())
-{
-    Data dataItem = readOnlyEnumerator.Current;
-    Console.WriteLine(dataItem);
-}
-*/
-

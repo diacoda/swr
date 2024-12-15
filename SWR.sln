@@ -5,8 +5,6 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "swrconsole", "swrconsole\swrconsole.csproj", "{7B7A0C68-D2ED-46F1-8473-045FB896DBEE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "tsx", "tsx\tsx.csproj", "{EF655E51-54B5-4C1E-99EC-62A34DC1970D}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "swrapi", "swrapi\swrapi.csproj", "{1BA541C1-1BFE-4127-B0DB-2E1B5AEEB68E}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "swrlib", "swrlib\swrlib.csproj", "{2956CA8B-8AE7-41A6-AC8A-0B8FE025AA73}"
@@ -23,10 +21,6 @@ Global
 		{7B7A0C68-D2ED-46F1-8473-045FB896DBEE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7B7A0C68-D2ED-46F1-8473-045FB896DBEE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7B7A0C68-D2ED-46F1-8473-045FB896DBEE}.Release|Any CPU.Build.0 = Release|Any CPU
-		{EF655E51-54B5-4C1E-99EC-62A34DC1970D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{EF655E51-54B5-4C1E-99EC-62A34DC1970D}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{EF655E51-54B5-4C1E-99EC-62A34DC1970D}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{EF655E51-54B5-4C1E-99EC-62A34DC1970D}.Release|Any CPU.Build.0 = Release|Any CPU
 		{1BA541C1-1BFE-4127-B0DB-2E1B5AEEB68E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{1BA541C1-1BFE-4127-B0DB-2E1B5AEEB68E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1BA541C1-1BFE-4127-B0DB-2E1B5AEEB68E}.Release|Any CPU.ActiveCfg = Release|Any CPU
