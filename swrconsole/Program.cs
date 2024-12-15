@@ -42,9 +42,9 @@ try
     scenario.Years = 30;
     scenario.StartYear = 1971;
     scenario.EndYear = 2023;
-    scenario.Portfolio = new Portfolio("us_stocks_n:85;ca_stocks:15");
+    scenario.Portfolio = new Portfolio("ca_stocks:100");
     //scenario.Portfolio = new Portfolio("us_stocks_n:100");
-    scenario.Inflation = "us_inflation";
+    scenario.Inflation = "ca_inflation";
     scenario.WithdrawFrequency = 1;
     scenario.WithdrawalMethod = WithdrawalMethod.STANDARD;
     scenario.WithdrawalRate = 4.0f;

@@ -954,7 +954,7 @@ public class Scenario
 
             if (currency == "usd")
             {
-                if (asset == "cad_stocks" || asset == "cad_bonds")
+                if (asset == "ca_stocks" || asset == "ca_bonds")
                 {
                     ExchangeSet[i] = true;
                     ExchangeRates.Add(exchangeDataInv);
@@ -972,7 +972,7 @@ public class Scenario
             }
             else if (currency == "cad")
             {
-                if (asset == "cad_stocks" || asset == "cad_bonds")
+                if (asset == "ca_stocks" || asset == "ca_bonds")
                 {
                     ExchangeSet[i] = false;
                     DataVector valuesCopy = new DataVector("exchange rates");

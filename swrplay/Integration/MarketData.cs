@@ -102,6 +102,43 @@ public class MarketData
 
         }
     }
+
+    public void TransformCanadaCPI()
+    {
+        String? line;
+        try
+        {
+            using StreamReader reader = new StreamReader(Path.Combine(Environment.CurrentDirectory, "stock-data/18100004.csv"));
+            using StreamWriter writer = new StreamWriter(Path.Combine(Environment.CurrentDirectory, "stock-data/ca_inflation.csv"));
+            line = reader.ReadLine();
+            while (line != null)
+            {
+
+                //write the line to console window
+                //Console.WriteLine(line);
+                string[] data = line.Split(',', StringSplitOptions.RemoveEmptyEntries);
+                if (data[1] == "\"Canada\"" && data[3] == "\"All-items\"")
+                {
+                    string[] dates = data[0].Split('-', StringSplitOptions.RemoveEmptyEntries);
+                    int year = int.Parse(dates[0].Substring(1));
+                    int month = int.Parse(dates[1].Substring(0, dates[1].Length - 1));
+                    double value = double.Parse(data[10].Substring(1, data[10].Length - 2));
+                    writer.WriteLine($"{month},{year},{value}");
+                }
+                line = reader.ReadLine();
+            }
+            reader.Close();
+            writer.Close();
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine("Exception: " + e.Message);
+        }
+        finally
+        {
+
+        }
+    }
     public string TransformDaily(string inputFilePath)
     {
         string outputFilePath = inputFilePath + "_m";

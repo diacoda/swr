@@ -34,8 +34,8 @@ try
         .Build();
 
     var service = host.Services.GetRequiredService<MarketData>();
-    service.TransformCanadianStocks();
-    string? filePath = await service.GetData("^GSPTSE", TickerFrequency.Daily);
+    service.TransformCanadaCPI();
+    //string? filePath = await service.GetData("^GSPTSE", TickerFrequency.Daily);
     Console.WriteLine("loaded");
 }
 catch (Exception ex)
