@@ -1,3 +1,4 @@
+using System.Formats.Asn1;
 using System.Runtime.CompilerServices;
 using Integration;
 using Microsoft.Extensions.Logging;
@@ -102,7 +103,40 @@ public class MarketData
 
         }
     }
+    public void TransformExchangeRates()
+    {
+        String? line;
+        try
+        {
+            using StreamReader reader = new StreamReader(Path.Combine(Environment.CurrentDirectory, "stock-data/10100009.csv"));
+            using StreamWriter writer = new StreamWriter(Path.Combine(Environment.CurrentDirectory, "stock-data/usd_cad_new.csv"));
+            line = reader.ReadLine();
+            while (line != null)
+            {
+                string[] data = line.Split(',', StringSplitOptions.RemoveEmptyEntries);
 
+                if (data[1] == "\"Canada\"" && data[3] == "\"United States dollar" && data[4] == " noon spot rate")
+                {
+                    string[] dates = data[0].Split('-', StringSplitOptions.RemoveEmptyEntries);
+                    int year = int.Parse(dates[0].Substring(1));
+                    int month = int.Parse(dates[1].Substring(0, dates[1].Length - 1));
+                    double value = double.Parse(data[12].Substring(1, data[12].Length - 2));
+                    writer.WriteLine($"{month},{year},{value}");
+                }
+                line = reader.ReadLine();
+            }
+            reader.Close();
+            writer.Close();
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine("Exception: " + e.Message);
+        }
+        finally
+        {
+
+        }
+    }
     public void TransformCanadaCPI()
     {
         String? line;
@@ -113,9 +147,6 @@ public class MarketData
             line = reader.ReadLine();
             while (line != null)
             {
-
-                //write the line to console window
-                //Console.WriteLine(line);
                 string[] data = line.Split(',', StringSplitOptions.RemoveEmptyEntries);
                 if (data[1] == "\"Canada\"" && data[3] == "\"All-items\"")
                 {
@@ -139,17 +170,131 @@ public class MarketData
 
         }
     }
-    public string TransformDaily(string inputFilePath)
+    public void TransformDaily(string inputFilePath)
     {
-        string outputFilePath = inputFilePath + "_m";
+        if (String.IsNullOrEmpty(inputFilePath))
+        {
+            inputFilePath = Path.Combine(Environment.CurrentDirectory, "stock-data/GC=F_Daily.csv");
+        }
+        string outputFilePath = Path.Combine(Environment.CurrentDirectory, "stock-data/gold_m.csv");
+
         string[] lines = File.ReadAllLines(inputFilePath);
 
-        // Create the output file and write the header
-        using (StreamWriter writer = new StreamWriter(outputFilePath))
-        {
+        using StreamWriter writer = new StreamWriter(outputFilePath);
 
+        int previousMonth = 0;
+        int previousYear = 0;
+        int count = 0;
+        List<double> monthly = new List<double>();
+        foreach (string line in lines)
+        {
+            string[] data = line.Split(',', StringSplitOptions.RemoveEmptyEntries);
+            int month = int.Parse(data[1]);
+            int year = int.Parse(data[0]);
+            int day = int.Parse(data[2]);
+            double close = double.Parse(data[3]);
+            Console.WriteLine($"{year},{month},{day},{close}");
+            // discard zeros!
+            if (close == 0.0)
+            {
+                continue;
+            }
+            if (previousMonth != month)
+            {
+                if (count != 0)
+                {
+                    // calculate average
+                    if (count != monthly.Count)
+                    {
+                        throw new ApplicationException("wrong stuff :)");
+                    }
+                    double average = monthly.Average();
+                    double average2 = monthly.Sum() / count;
+
+                    writer.WriteLine($"{previousMonth},{previousYear},{average:F4},{average2:F4}");
+                }
+                // reset
+                count = 0;
+                monthly = new List<double>();
+            }
+            count++;
+            monthly.Add(close);
+            previousMonth = month;
+            previousYear = year;
         }
-        return outputFilePath;
+
+        // Create the output file and write the header
+        writer.Close();
+        return;
+    }
+
+    public void TransformDaily2(string inputFilePath)
+    {
+        if (String.IsNullOrEmpty(inputFilePath))
+        {
+            inputFilePath = Path.Combine(Environment.CurrentDirectory, "stock-data/gold_daily.txt");
+        }
+        string outputFilePath = Path.Combine(Environment.CurrentDirectory, "stock-data/gold_m2.csv");
+
+        string[] lines = File.ReadAllLines(inputFilePath);
+
+        using StreamWriter writer = new StreamWriter(outputFilePath);
+
+        int previousMonth = 0;
+        int previousYear = 0;
+        int count = 0;
+        List<double> monthly = new List<double>();
+        string sYear = "";
+        foreach (string line in lines)
+        {
+            string[] data = line.Split('\t', StringSplitOptions.RemoveEmptyEntries);
+            string[] dates = data[0].Split('/', StringSplitOptions.RemoveEmptyEntries);
+            int month = int.Parse(dates[0]);
+            if (dates[2].StartsWith('0') || dates[2].StartsWith('1') || dates[2].StartsWith('2'))
+            {
+                sYear = "20" + dates[2];
+            }
+            else
+            {
+                sYear = "19" + dates[2];
+            }
+            int year = int.Parse(sYear);
+            int day = int.Parse(dates[1]);
+
+            double close = double.Parse(data[1]);
+            Console.WriteLine($"{year},{month},{day},{close}");
+            // discard zeros!
+            if (close == 0.0)
+            {
+                continue;
+            }
+            if (previousMonth != month)
+            {
+                if (count != 0)
+                {
+                    // calculate average
+                    if (count != monthly.Count)
+                    {
+                        throw new ApplicationException("wrong stuff :)");
+                    }
+                    double average = monthly.Average();
+                    double average2 = monthly.Sum() / count;
+
+                    writer.WriteLine($"{previousMonth},{previousYear},{average:F4},{average2:F4}");
+                }
+                // reset
+                count = 0;
+                monthly = new List<double>();
+            }
+            count++;
+            monthly.Add(close);
+            previousMonth = month;
+            previousYear = year;
+        }
+
+        // Create the output file and write the header
+        writer.Close();
+        return;
     }
 
     public string TransformNominal(string inputFilePath)

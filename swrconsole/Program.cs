@@ -40,11 +40,11 @@ try
     }
 
     scenario.Years = 30;
-    scenario.StartYear = 1971;
+    scenario.StartYear = 1871;
     scenario.EndYear = 2023;
-    scenario.Portfolio = new Portfolio("ca_stocks:100");
-    //scenario.Portfolio = new Portfolio("us_stocks_n:100");
-    scenario.Inflation = "ca_inflation";
+    string allocation = "us_stocks_n:70;gold:15;ca_stocks:15;";
+    scenario.Portfolio = new Portfolio(allocation);
+    scenario.Inflation = "us_inflation";
     scenario.WithdrawFrequency = 1;
     scenario.WithdrawalMethod = WithdrawalMethod.STANDARD;
     scenario.WithdrawalRate = 4.0f;
@@ -59,7 +59,7 @@ try
 
     scenario.Values = DataLoader.LoadValues(scenario.Portfolio.Allocations);
     scenario.InflationData = DataLoader.LoadInflation(scenario.Values, scenario.Inflation);
-    bool r3 = scenario.PrepareExchangeRates("cad");
+    bool r3 = scenario.PrepareExchangeRates("usd");
     Fixed.Simulate(scenario);
 
     Vanguard.Simulate(scenario, host.Services);
