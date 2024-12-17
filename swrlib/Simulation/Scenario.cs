@@ -72,12 +72,13 @@ public class Scenario
     public List<DataVector> ExchangeRates { get; set; } = new List<DataVector>();
 
     public int Years { get; set; }
-    public float WithdrawalRate { get; set; } = 0.04f;
+    public float WithdrawalRate { get; set; } = 4.0f;
     public int StartYear { get; set; }
     public int EndYear { get; set; }
     // success rate limit for finding safw withdrawal rate, the success rate must be bigger than this rate
     public float SuccessRateLimit { get; set; } = 95.0f;
     public float InitialValue { get; set; } = 10000.0f;
+    public WithdrawalFrequency WithdrawalFrequency { get; set; } = WithdrawalFrequency.MONTHLY;
     public int WithdrawFrequency { get; set; } = 1;
     public Rebalancing Rebalance { get; set; } = Rebalancing.NONE;
     public float RebalancingThreshold { get; set; } = 0.01f;
@@ -113,7 +114,7 @@ public class Scenario
     public bool IsFailure(Context context, double currentValue)
     {
         // If it's not the end, we simply need to not run out of money
-        if (!context.End())
+        if (!context.End)
         {
             return currentValue <= 0.0f;
         }

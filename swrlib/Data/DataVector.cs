@@ -110,7 +110,10 @@ public class DataVector : IEnumerable<Item>
         FixEnd();
         FixStart();
 
-        if (Data.Count == 0) return;
+        if (Data.Count == 0)
+        {
+            return;
+        }
 
         if (Math.Abs(Data[0].Value - 1.0) < 0.0001)
         {

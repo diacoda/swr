@@ -18,8 +18,11 @@ public class Context
     public int MonthIndex { get; set; } = 0;
     public int TotalMonths { get; set; } = 0;
 
-    public bool End()
+    public bool End
     {
-        return MonthIndex == TotalMonths;
+        get
+        {
+            return MonthIndex == TotalMonths;
+        }
     }
 }

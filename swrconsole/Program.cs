@@ -31,6 +31,14 @@ try
         })
         .Build();
 
+    WithdrawalStrategy strategy = new WithdrawalStrategy(10000.0f);
+    strategy.WithdrawalFrequency = WithdrawalFrequency.YEARLY;
+    strategy.WithdrawalMethod = WithdrawalMethod.STANDARD;
+    strategy.WithdrawalRate = 4f;
+    float withdrawal = strategy.CalculateWithdrawalAmount(1, 12, 10000.0f);
+    withdrawal = strategy.CalculateWithdrawalAmount(1, 12, 10000.0f - withdrawal);
+
+
     // Resolve Scenario using DI
     Scenario scenario = host.Services.GetRequiredService<Scenario>();
 
@@ -45,7 +53,7 @@ try
     string allocation = "us_stocks_n:70;gold:15;ca_stocks:15;";
     scenario.Portfolio = new Portfolio(allocation);
     scenario.Inflation = "us_inflation";
-    scenario.WithdrawFrequency = 1;
+    scenario.WithdrawalFrequency = WithdrawalFrequency.MONTHLY;
     scenario.WithdrawalMethod = WithdrawalMethod.STANDARD;
     scenario.WithdrawalRate = 4.0f;
     scenario.Fees = 0.003f;
@@ -119,6 +127,12 @@ try
         Enum.TryParse(rebalancingStr, true, out Rebalancing rebalancing))
     {
         scenario.Rebalance = rebalancing;
+    }
+    if (arguments.TryGetValue("withdrawalFrequency", out var withdrawalFrequencyValue) &&
+        withdrawalFrequencyValue is string withdrawalFrequencyStr &&
+        Enum.TryParse(withdrawalFrequencyStr, true, out WithdrawalFrequency withdrawalFrequency))
+    {
+        scenario.WithdrawalFrequency = withdrawalFrequency;
     }
 
     scenario.Values = DataLoader.LoadValues(scenario.Portfolio.Allocations);

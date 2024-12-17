@@ -12,7 +12,7 @@ public class Fixed
 
     public static void Simulate(Scenario scenario)
     {
-        scenario.WithdrawFrequency = 12;
+        scenario.WithdrawalFrequency = WithdrawalFrequency.YEARLY;
         Results yearlyResults = scenario.Simulate();
         yearlyResults.Print("Yearly");
 

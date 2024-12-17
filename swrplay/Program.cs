@@ -36,7 +36,8 @@ try
     var service = host.Services.GetRequiredService<MarketData>();
     //service.TransformCanadaCPI();
     //string? filePath = await service.GetData("GC=F", TickerFrequency.Daily);
-    service.TransformExchangeRates();
+    //service.TransformExchangeRates();
+
     Console.WriteLine("loaded");
 }
 catch (Exception ex)
