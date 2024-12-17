@@ -6,6 +6,7 @@ using Swr.Investment;
 using Swr.Processing;
 using Swr.Simulation;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Configuration;
 
 var logFilePath = "logs/swrconsole.log";
 
@@ -22,6 +23,12 @@ Log.Logger = new LoggerConfiguration()
 try
 {
     Log.Information("started");
+    // Build a config object, using env vars and JSON providers.
+    IConfigurationRoot config = new ConfigurationBuilder()
+        .AddJsonFile("appsettings.json")
+        .AddEnvironmentVariables()
+        .Build();
+
     var host = Host.CreateDefaultBuilder(args)
         .UseSerilog() // Use Serilog as the logging provider
         .ConfigureServices((context, services) =>
@@ -32,12 +39,19 @@ try
         .Build();
 
     WithdrawalStrategy strategy = new WithdrawalStrategy(10000.0f);
-    strategy.WithdrawalFrequency = WithdrawalFrequency.YEARLY;
+    strategy.WithdrawalFrequency = WithdrawalFrequency.MONTHLY;
     strategy.WithdrawalMethod = WithdrawalMethod.STANDARD;
     strategy.WithdrawalRate = 4f;
-    float withdrawal = strategy.CalculateWithdrawalAmount(1, 12, 10000.0f);
-    withdrawal = strategy.CalculateWithdrawalAmount(1, 12, 10000.0f - withdrawal);
-
+    float currentValue = 10000f;
+    float withdrawal = strategy.CalculateWithdrawalAmount(1, 12, currentValue);
+    currentValue -= withdrawal;
+    withdrawal = strategy.CalculateWithdrawalAmount(2, 12, currentValue);
+    currentValue -= withdrawal;
+    withdrawal = strategy.CalculateWithdrawalAmount(3, 12, currentValue);
+    currentValue -= withdrawal;
+    withdrawal = strategy.CalculateWithdrawalAmount(4, 12, currentValue);
+    currentValue -= withdrawal;
+    withdrawal = strategy.CalculateWithdrawalAmount(5, 12, currentValue);
 
     // Resolve Scenario using DI
     Scenario scenario = host.Services.GetRequiredService<Scenario>();
