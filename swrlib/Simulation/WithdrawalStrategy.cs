@@ -1,3 +1,5 @@
+using System.ComponentModel;
+
 namespace Swr.Simulation;
 
 public class WithdrawalStrategy
@@ -17,8 +19,8 @@ public class WithdrawalStrategy
         {
             return frequency switch
             {
-                1 => WithdrawalFrequency.MONTHLY,
-                12 => WithdrawalFrequency.YEARLY,
+                12 => WithdrawalFrequency.MONTHLY,
+                1 => WithdrawalFrequency.YEARLY,
                 _ => throw new ApplicationException("Invalid frequency conversion")
             };
         }
@@ -26,8 +28,8 @@ public class WithdrawalStrategy
         {
             frequency = value switch
             {
-                WithdrawalFrequency.MONTHLY => 1,
-                WithdrawalFrequency.YEARLY => 12,
+                WithdrawalFrequency.MONTHLY => 12,
+                WithdrawalFrequency.YEARLY => 1,
                 _ => throw new ApplicationException("Invalid frequency conversion")
             };
         }
@@ -37,7 +39,7 @@ public class WithdrawalStrategy
     // percent: withdrawal rate
     public float WithdrawalRate { get; set; } = 4.0f;
     // minimum can't go lower 
-    private float MinimumWithdrawalPercent { get; set; } = 0.03f;
+    public float MinimumWithdrawalRate { get; set; } = 3.0f;
 
     public float VanguardMaxIncrease { get; set; } = 0.05f;
     public float VanguardMaxDecrease { get; set; } = 0.02f;
@@ -46,10 +48,50 @@ public class WithdrawalStrategy
     private float lastYearWithdrawal = 0.0f;
     private float lastWithdrawalAmount = 0.0f;
     private float yearWithdrawn = 0.0f;
-    public float CalculateWithdrawalAmount(int monthIndex, int totalMonths, float currentValue)
+
+    private bool Validate()
     {
+        bool valid = false;
+        // must have frequency
+        if (!(frequency == 1 || frequency == 12))
+        {
+            throw new InvalidEnumArgumentException(nameof(frequency));
+        }
+        // WithdrawalRate must be positive
+        if (WithdrawalRate <= 0)
+        {
+            throw new ArgumentException(nameof(WithdrawalRate));
+        }
+
+        switch (method)
+        {
+            case WithdrawalMethod.STANDARD:
+                // must have frequency
+                break;
+            case WithdrawalMethod.CURRENT:
+                break;
+            case WithdrawalMethod.VANGUARD:
+                break;
+        }
+        valid = true;
+        return valid;
+    }
+
+    private float WithrawalAmount(float currentValue, float rate, int periods)
+    {
+        return (currentValue * (rate / 100.0f)) / (12.0f / periods);
+    }
+
+    public float CalculateWithdrawalAmount(int monthIndex, int totalMonths, float currentValue, float inflation)
+    {
+        if (!Validate())
+        {
+            throw new ApplicationException("invalid withdrawal use case");
+        }
+        // index with inflation
+        initialValue *= inflation;
+
         float withdrawalAmount = 0f;
-        float minimumWithdrawalAmount = 0.0f;
 
         // Perform withdrawals only at specified intervals based on WithdrawFrequency.
         if ((monthIndex - 1) % frequency == 0)
@@ -64,18 +106,15 @@ public class WithdrawalStrategy
             // Compute the withdrawal amount based on the withdrawal strategy
             if (method == WithdrawalMethod.STANDARD)
             {
-                withdrawalAmount = initialValue * (WithdrawalRate / 100.0f);
                 // Fixed annual withdrawal rate divided into periodic withdrawals.
-                withdrawalAmount = withdrawalAmount / (12.0f / periods);
+                withdrawalAmount = WithrawalAmount(initialValue, WithdrawalRate, periods);
             }
             else if (method == WithdrawalMethod.CURRENT)
             {
                 // Percentage-based withdrawal tied to the current portfolio value.
-                withdrawalAmount = (currentValue * (WithdrawalRate / 100.0f)) / (12.0f / periods);
-                minimumWithdrawalAmount = initialValue * MinimumWithdrawalPercent;
+                withdrawalAmount = WithrawalAmount(currentValue, WithdrawalRate, periods);
                 // Ensure the withdrawal does not fall below the specified minimum.
-                minimumWithdrawalAmount = minimumWithdrawalAmount / (12.0f / periods);
-
+                float minimumWithdrawalAmount = WithrawalAmount(initialValue, MinimumWithdrawalRate, periods);
                 if (withdrawalAmount < minimumWithdrawalAmount)
                 {
                     withdrawalAmount = minimumWithdrawalAmount;
@@ -94,7 +133,6 @@ public class WithdrawalStrategy
                 {
                     // Update withdrawals annually.
                     withdrawalAmount = currentValue * (WithdrawalRate / 100.0f);
-
                     // Cap increases and decreases based on specified limits.
                     if (withdrawalAmount > (1.0f + VanguardMaxIncrease) * lastYearWithdrawal)
                     {
@@ -107,11 +145,9 @@ public class WithdrawalStrategy
                     lastYearWithdrawal = withdrawalAmount;
                 }
                 // Adjust withdrawal to a periodic base
-                withdrawalAmount = withdrawalAmount / (12.0f / periods);
-
-                // Ensure a minimum withdrawal amount is maintained.
-                minimumWithdrawalAmount = initialValue * MinimumWithdrawalPercent;
-                minimumWithdrawalAmount = minimumWithdrawalAmount / (12.0f / periods);
+                withdrawalAmount = WithrawalAmount(currentValue, WithdrawalRate, periods);
+                // Ensure the withdrawal does not fall below the specified minimum.
+                float minimumWithdrawalAmount = WithrawalAmount(initialValue, MinimumWithdrawalRate, periods);
                 if (withdrawalAmount < minimumWithdrawalAmount)
                 {
                     withdrawalAmount = minimumWithdrawalAmount;
@@ -128,8 +164,8 @@ public class WithdrawalStrategy
                 }
             }
             */
-            lastWithdrawalAmount = withdrawalAmount;
-            yearWithdrawn += withdrawalAmount;
+            this.lastWithdrawalAmount = withdrawalAmount;
+            this.yearWithdrawn += withdrawalAmount;
         }
         return withdrawalAmount;
     }

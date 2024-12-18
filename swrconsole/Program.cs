@@ -37,21 +37,22 @@ try
             services.AddScoped<Scenario>();
         })
         .Build();
-
+/* 
     WithdrawalStrategy strategy = new WithdrawalStrategy(10000.0f);
     strategy.WithdrawalFrequency = WithdrawalFrequency.MONTHLY;
-    strategy.WithdrawalMethod = WithdrawalMethod.STANDARD;
+    strategy.WithdrawalMethod = WithdrawalMethod.CURRENT;
     strategy.WithdrawalRate = 4f;
+    strategy.MinimumWithdrawalRate = 5f;
     float currentValue = 10000f;
-    float withdrawal = strategy.CalculateWithdrawalAmount(1, 12, currentValue);
+    float withdrawal = strategy.CalculateWithdrawalAmount(1, 12, currentValue, 1.1f);
     currentValue -= withdrawal;
-    withdrawal = strategy.CalculateWithdrawalAmount(2, 12, currentValue);
+    withdrawal = strategy.CalculateWithdrawalAmount(2, 12, currentValue, 1.2f);
     currentValue -= withdrawal;
-    withdrawal = strategy.CalculateWithdrawalAmount(3, 12, currentValue);
+    withdrawal = strategy.CalculateWithdrawalAmount(3, 12, currentValue, 1.1f);
     currentValue -= withdrawal;
-    withdrawal = strategy.CalculateWithdrawalAmount(4, 12, currentValue);
+    withdrawal = strategy.CalculateWithdrawalAmount(4, 12, currentValue, 1.2f);
     currentValue -= withdrawal;
-    withdrawal = strategy.CalculateWithdrawalAmount(5, 12, currentValue);
+    withdrawal = strategy.CalculateWithdrawalAmount(5, 12, currentValue, 1.1f); */
 
     // Resolve Scenario using DI
     Scenario scenario = host.Services.GetRequiredService<Scenario>();
@@ -71,7 +72,7 @@ try
     scenario.WithdrawalMethod = WithdrawalMethod.STANDARD;
     scenario.WithdrawalRate = 4.0f;
     scenario.Fees = 0.003f;
-    scenario.MinimumWithdrawalPercent = 0.03f;
+    scenario.MinimumWithdrawalRate = 3.0f;
     scenario.AdjustRemainingWithInflation = true;
     scenario.PercentageRemainingTarget = 0.1f;
     scenario.CashSimple = false;
@@ -127,9 +128,9 @@ try
         // there is a default, 0.01
         scenario.Fees = (float)arguments["fees"] / 100.0f;
     }
-    if (arguments.TryGetValue("minimumWithdrawalPercent", out var minimumWithdrawalPercent))
+    if (arguments.TryGetValue("minimumWithdrawalRate", out var minimumWithdrawalRate))
     {
-        scenario.MinimumWithdrawalPercent = (float)minimumWithdrawalPercent;
+        scenario.MinimumWithdrawalRate = (float)minimumWithdrawalRate;
     }
     if (arguments.TryGetValue("limit", out var limit))
     {

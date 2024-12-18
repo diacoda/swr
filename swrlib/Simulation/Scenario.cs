@@ -37,7 +37,7 @@ public class Scenario
 
         WithdrawalMethod = s.WithdrawalMethod;
 
-        MinimumWithdrawalPercent = s.MinimumWithdrawalPercent;
+        MinimumWithdrawalRate = s.MinimumWithdrawalRate;
         VanguardMaxIncrease = s.VanguardMaxIncrease;
         VanguardMaxDecrease = s.VanguardMaxDecrease;
 
@@ -51,8 +51,8 @@ public class Scenario
         AdjustRemainingWithInflation = s.AdjustRemainingWithInflation;
 
         UseGlidepath = s.UseGlidepath;
-        GP_Pass = s.GP_Pass;
-        GP_Goal = s.GP_Goal;
+        GlidepathAllocationChangeRate = s.GlidepathAllocationChangeRate;
+        GlidepathAllocationTarget = s.GlidepathAllocationTarget;
 
         UseSocialSecurity = s.UseSocialSecurity;
         SocialDelay = s.SocialDelay;
@@ -84,7 +84,7 @@ public class Scenario
     public float RebalancingThreshold { get; set; } = 0.01f;
     public float Fees { get; set; } = 0.003f; // TER 0.3% = 0.003
     public WithdrawalMethod WithdrawalMethod { get; set; } = WithdrawalMethod.STANDARD;
-    public float MinimumWithdrawalPercent { get; set; } = 0.03f; // Minimum of 3% * initial
+    public float MinimumWithdrawalRate { get; set; } = 3.0f; // Minimum of 3% * initial
 
     public float VanguardMaxIncrease { get; set; } = 0.05f;
     public float VanguardMaxDecrease { get; set; } = 0.02f;
@@ -102,8 +102,8 @@ public class Scenario
     public bool AdjustRemainingWithInflation { get; set; } = true;
 
     public bool UseGlidepath { get; set; } = false;
-    public float GP_Pass { get; set; } = 0.0f;
-    public float GP_Goal { get; set; } = 0.0f;
+    public float GlidepathAllocationChangeRate { get; set; } = 0.0f;
+    public float GlidepathAllocationTarget { get; set; } = 0.0f;
 
     public bool UseSocialSecurity { get; set; } = false;
     public int SocialDelay { get; set; } = 0;
@@ -167,27 +167,28 @@ public class Scenario
 
     private bool Glidepath(Context context, List<float> currentValues, int N)
     {
-        if (UseGlidepath)
+        // must be done for two only, yes for now
+        if (UseGlidepath && Portfolio.Allocations.Count >= 2)
         {
-            // Check if we have already reached the target
-            if (Portfolio.Allocations[0].AllocationCurrent == GP_Goal)
+            // Check if we have already reached the target: GlidepathAllocationTarget
+            if (Portfolio.Allocations[0].AllocationCurrent == GlidepathAllocationTarget)
             {
                 return true;
             }
-
-            Portfolio.Allocations[0].AllocationCurrent += GP_Pass;
-            Portfolio.Allocations[1].AllocationCurrent -= GP_Pass;
+            // GlidepathAllocationChangeRate
+            Portfolio.Allocations[0].AllocationCurrent += GlidepathAllocationChangeRate;
+            Portfolio.Allocations[1].AllocationCurrent -= GlidepathAllocationChangeRate;
 
             // Acount for float inaccuracies
-            if (GP_Pass > 0.0f && Portfolio.Allocations[0].AllocationCurrent > GP_Goal)
+            if (GlidepathAllocationChangeRate > 0.0f && Portfolio.Allocations[0].AllocationCurrent > GlidepathAllocationTarget)
             {
-                Portfolio.Allocations[0].AllocationCurrent = GP_Goal;
-                Portfolio.Allocations[1].AllocationCurrent = 100.0f - GP_Goal;
+                Portfolio.Allocations[0].AllocationCurrent = GlidepathAllocationTarget;
+                Portfolio.Allocations[1].AllocationCurrent = 100.0f - GlidepathAllocationTarget;
             }
-            else if (GP_Pass < 0.0f && Portfolio.Allocations[0].AllocationCurrent < GP_Goal)
+            else if (GlidepathAllocationChangeRate < 0.0f && Portfolio.Allocations[0].AllocationCurrent < GlidepathAllocationTarget)
             {
-                Portfolio.Allocations[0].AllocationCurrent = GP_Goal;
-                Portfolio.Allocations[1].AllocationCurrent = 100.0f - GP_Goal;
+                Portfolio.Allocations[0].AllocationCurrent = GlidepathAllocationTarget;
+                Portfolio.Allocations[1].AllocationCurrent = 100.0f - GlidepathAllocationTarget;
             }
 
             // If rebalancing is not monthly, we do a rebalancing ourselves
@@ -555,27 +556,27 @@ public class Scenario
                 return res;
             }
 
-            if (GP_Pass == 0.0f)
+            if (GlidepathAllocationChangeRate == 0.0f)
             {
-                res.Message = $"Invalid pass ({GP_Pass}) for glidepath";
+                res.Message = $"Invalid pass ({GlidepathAllocationChangeRate}) for glidepath";
                 res.Error = true;
                 return res;
             }
 
-            if (GP_Pass > 0.0f && GP_Goal <= Portfolio.Allocations[0].AllocationValue)
+            if (GlidepathAllocationChangeRate > 0.0f && GlidepathAllocationTarget <= Portfolio.Allocations[0].AllocationValue)
             {
-                //std::cout << scenario.gp_pass << std::endl;
-                //std::cout << scenario.gp_goal << std::endl;
+                //std::cout << scenario.GlidepathAllocationChangeRate << std::endl;
+                //std::cout << scenario.GlidepathAllocationTarget << std::endl;
                 //std::cout << portfolio[0].allocation << std::endl;
                 res.Message = "Invalid goal/pass (1) for glidepath";
                 res.Error = true;
                 return res;
             }
 
-            if (GP_Pass < 0.0f && GP_Goal >= Portfolio.Allocations[0].AllocationValue)
+            if (GlidepathAllocationChangeRate < 0.0f && GlidepathAllocationTarget >= Portfolio.Allocations[0].AllocationValue)
             {
-                //std::cout << scenario.gp_pass << std::endl;
-                //std::cout << scenario.gp_goal << std::endl;
+                //std::cout << scenario.GlidepathAllocationChangeRate << std::endl;
+                //std::cout << scenario.GlidepathAllocationTarget << std::endl;
                 //std::cout << portfolio[0].allocation << std::endl;
                 res.Message = "Invalid goal/pass (2) for glidepath";
                 res.Error = true;
@@ -670,7 +671,7 @@ public class Scenario
                 // The amount of money withdrawn per year (STANDARD method)
                 context.Withdrawal = InitialValue * (WithdrawalRate / 100.0f);
                 // The minimum amount of money withdraw (CURRENT method)
-                context.MinimumWithdrawal = InitialValue * MinimumWithdrawalPercent;
+                context.MinimumWithdrawal = InitialValue * (MinimumWithdrawalRate / 100.0f);
                 // The amount of cash available
                 context.Cash = InitialCash;
                 // Used for the target threshold
@@ -678,6 +679,14 @@ public class Scenario
 
                 int endYear = currentYear + (currentMonth - 1 + context.TotalMonths - 1) / 12;
                 int endMonth = 1 + (currentMonth - 1 + (context.TotalMonths - 1) % 12) % 12;
+
+                WithdrawalStrategy withdrawalStrategy = new WithdrawalStrategy(InitialValue);
+                withdrawalStrategy.MinimumWithdrawalRate = MinimumWithdrawalRate;
+                withdrawalStrategy.WithdrawalRate = WithdrawalRate;
+                withdrawalStrategy.WithdrawalFrequency = WithdrawalFrequency;
+                withdrawalStrategy.CashSimple = false;
+                withdrawalStrategy.VanguardMaxDecrease = VanguardMaxDecrease;
+                withdrawalStrategy.VanguardMaxIncrease = VanguardMaxIncrease;
 
                 for (int y = currentYear; y <= endYear; y++)
                 {
@@ -721,8 +730,11 @@ public class Scenario
                         context.MinimumWithdrawal *= inflation;
                         context.FinalRemainingTarget *= inflation;
 
+                        float w = withdrawalStrategy.CalculateWithdrawalAmount(m, Years * 12, currentValues.Sum(), inflation);
+                        //Console.WriteLine($"Withdrawal {w} year:{y} month:{m} within current year: {currentYear} and current month: {currentMonth}");
                         // Perform withdrawals
                         step(() => Withdraw(context, currentValues, N), res, currentYear, currentMonth, ref failure, context);
+                        //Console.WriteLine($"Out {context.LastWithdrawalAmount} year:{y} month:{m} within current year: {currentYear} and current month: {currentMonth}");
                         info.ValuesAfterWithdrawal = Sum(currentValues);
                         // Record withdrawal
                         if ((context.MonthIndex - 1) % 12 == 0)
