@@ -5,7 +5,7 @@
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <StartWorkingDirectory>$(MSBuildProjectDirectory)</StartWorkingDirectory>
+    <!-- <StartWorkingDirectory>$(MSBuildProjectDirectory)</StartWorkingDirectory> -->
   </PropertyGroup>
   <PropertyGroup>
     <StartArguments>--command=fixed --years=30 --start=1871 --end=2024 --portfolio=us_stocks:100; --inflation=us_inflation --fees=0.3 --limit=95.0</StartArguments>

@@ -23,6 +23,7 @@ Log.Logger = new LoggerConfiguration()
 try
 {
     Log.Information("started");
+    //await host.RunAsync();
     // Build a config object, using env vars and JSON providers.
     IConfigurationRoot config = new ConfigurationBuilder()
         .AddJsonFile("appsettings.json")
@@ -37,22 +38,7 @@ try
             services.AddScoped<Scenario>();
         })
         .Build();
-/* 
-    WithdrawalStrategy strategy = new WithdrawalStrategy(10000.0f);
-    strategy.WithdrawalFrequency = WithdrawalFrequency.MONTHLY;
-    strategy.WithdrawalMethod = WithdrawalMethod.CURRENT;
-    strategy.WithdrawalRate = 4f;
-    strategy.MinimumWithdrawalRate = 5f;
-    float currentValue = 10000f;
-    float withdrawal = strategy.CalculateWithdrawalAmount(1, 12, currentValue, 1.1f);
-    currentValue -= withdrawal;
-    withdrawal = strategy.CalculateWithdrawalAmount(2, 12, currentValue, 1.2f);
-    currentValue -= withdrawal;
-    withdrawal = strategy.CalculateWithdrawalAmount(3, 12, currentValue, 1.1f);
-    currentValue -= withdrawal;
-    withdrawal = strategy.CalculateWithdrawalAmount(4, 12, currentValue, 1.2f);
-    currentValue -= withdrawal;
-    withdrawal = strategy.CalculateWithdrawalAmount(5, 12, currentValue, 1.1f); */
+    var s = config["key"];
 
     // Resolve Scenario using DI
     Scenario scenario = host.Services.GetRequiredService<Scenario>();

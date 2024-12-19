@@ -41,8 +41,6 @@ public class Scenario
         VanguardMaxIncrease = s.VanguardMaxIncrease;
         VanguardMaxDecrease = s.VanguardMaxDecrease;
 
-        TimeoutMsecs = s.TimeoutMsecs;
-
         InitialCash = s.InitialCash;
         CashSimple = s.CashSimple;
 
@@ -71,6 +69,7 @@ public class Scenario
     public List<bool> ExchangeSet { get; set; } = new List<bool>();
     public List<DataVector> ExchangeRates { get; set; } = new List<DataVector>();
 
+    public string Inflation { get; set; } = "no-inflation";
     public int Years { get; set; }
     public float WithdrawalRate { get; set; } = 4.0f;
     public int StartYear { get; set; }
@@ -78,23 +77,19 @@ public class Scenario
     // success rate limit for finding safw withdrawal rate, the success rate must be bigger than this rate
     public float SuccessRateLimit { get; set; } = 95.0f;
     public float InitialValue { get; set; } = 10000.0f;
+    public float Fees { get; set; } = 0.003f; // TER 0.3% = 0.003
     public WithdrawalFrequency WithdrawalFrequency { get; set; } = WithdrawalFrequency.MONTHLY;
     public int WithdrawFrequency { get; set; } = 1;
     public Rebalancing Rebalance { get; set; } = Rebalancing.NONE;
     public float RebalancingThreshold { get; set; } = 0.01f;
-    public float Fees { get; set; } = 0.003f; // TER 0.3% = 0.003
+
     public WithdrawalMethod WithdrawalMethod { get; set; } = WithdrawalMethod.STANDARD;
     public float MinimumWithdrawalRate { get; set; } = 3.0f; // Minimum of 3% * initial
-
     public float VanguardMaxIncrease { get; set; } = 0.05f;
     public float VanguardMaxDecrease { get; set; } = 0.02f;
-
-    public int TimeoutMsecs { get; set; } = 0;
-
     public float InitialCash { get; set; } = 0.0f;
     public bool CashSimple { get; set; } = false;
 
-    public string Inflation { get; set; } = "no-inflation";
     // the percentage from the initial value that must remain after withdrawals
     // if the current value is below, then the simulation fails as it is not able to finish abive the percentage remaining threshold
     public float PercentageRemainingTarget { get; set; } = 0.01f;
