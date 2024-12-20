@@ -1,11 +1,8 @@
 using Swr.Simulation;
+namespace Swr.Config;
 
 public class ScenarioConfig
 {
-    private const float _monthlyRebalancingCost = 0.005f;
-    private const float _yearlyRebalancingCost = 0.01f;
-    private const float _thresholdRebalancingCost = 0.01f;
-
     public float InitialInvestment { get; set; } = 10000.0f;
     public float InitialCash { get; set; } = 0.0f;
     public string Portfolio { get; set; } = String.Empty;

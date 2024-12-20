@@ -25,6 +25,7 @@ class Program
             .ConfigureServices((hostContext, services) =>
             {
                 services.AddSingleton<MyApp>();
+                services.AddScoped<Simulator>();
             });
         var app = builder.Build();
         await app.Services.GetRequiredService<MyApp>().StartAsync();
@@ -37,12 +38,17 @@ class MyApp
     private IHostEnvironment _env;
     private ILogger<MyApp> _logger;
     private IConfiguration _configuration;
+    private Simulator _simulator;
 
-    public MyApp(IHostEnvironment env, ILogger<MyApp> logger, IConfiguration configuration)
+    public MyApp(   IHostEnvironment env, 
+                    ILogger<MyApp> logger, 
+                    IConfiguration configuration,
+                    Simulator simulator)
     {
         _env = env;
         _logger = logger;
         _configuration = configuration;
+        _simulator = simulator;
     }
 
     public Task StartAsync()
