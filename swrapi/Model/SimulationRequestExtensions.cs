@@ -11,16 +11,15 @@ public static class SimulationRequestExtensions
             throw new ArgumentNullException(nameof(request));
 
         Scenario scenario = new Scenario(logger);
-        scenario.Years = request.Years;
+        scenario.TimeHorizon = request.TimeHorizon;
         scenario.StartYear = request.StartYear;
         scenario.EndYear = request.EndYear;
         Portfolio portfolio = new Portfolio(request.Portfolio);
         scenario.Portfolio = portfolio;
         scenario.Inflation = request.Inflation;
-        scenario.WithdrawalRate = request.WithdrawalRate;
         scenario.Fees = request.Fees;
         scenario.WithdrawalMethod = request.WithdrawalMethod;
-        scenario.WithdrawFrequency = request.WithdrawalFrequency == WithdrawalFrequency.Monthly ? 12 : 1;
+        scenario.WithdrawalFrequency = request.WithdrawalFrequency;
         return scenario;
     }
 }

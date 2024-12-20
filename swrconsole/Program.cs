@@ -48,7 +48,7 @@ try
         return;
     }
 
-    scenario.Years = 30;
+    scenario.TimeHorizon = 30;
     scenario.StartYear = 1871;
     scenario.EndYear = 2023;
     string allocation = "us_stocks_n:70;gold:15;ca_stocks:15;";
@@ -59,11 +59,11 @@ try
     scenario.WithdrawalRate = 4.0f;
     scenario.Fees = 0.003f;
     scenario.MinimumWithdrawalRate = 3.0f;
-    scenario.AdjustRemainingWithInflation = true;
-    scenario.PercentageRemainingTarget = 0.1f;
-    scenario.CashSimple = false;
+    scenario.InflationAdjustedFinalTarget = true;
+    scenario.FinalTargetPercentage = 0.1f;
+    scenario.UseCashWithdrawal = false;
     scenario.InitialCash = 0;
-    //scenario.CashSimple = true;
+    //scenario.UseCashWithdrawal = true;
     //scenario.InitialCash = 80;
 
     scenario.Values = DataLoader.LoadValues(scenario.Portfolio.Allocations);
@@ -87,7 +87,7 @@ try
 
     }
 
-    scenario.Years = (int)arguments["years"];
+    scenario.TimeHorizon = (int)arguments["TimeHorizon"];
     scenario.StartYear = (int)arguments["start"];
     scenario.EndYear = (int)arguments["end"];
     if (arguments.TryGetValue("portfolio", out var portfolio) &&

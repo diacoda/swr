@@ -4,13 +4,13 @@ namespace Swr.Simulation;
 
 public class WithdrawalStrategy
 {
-    public WithdrawalStrategy(float initialValue)
+    public WithdrawalStrategy(float InitialInvestment)
     {
-        this.initialValue = initialValue;
+        this.InitialInvestment = InitialInvestment;
     }
 
     // initial investment Value
-    private float initialValue;
+    private float InitialInvestment;
     // default as monthly(1)
     private int frequency = 1;
     public WithdrawalFrequency WithdrawalFrequency
@@ -41,9 +41,9 @@ public class WithdrawalStrategy
     // minimum can't go lower 
     public float MinimumWithdrawalRate { get; set; } = 3.0f;
 
-    public float VanguardMaxIncrease { get; set; } = 0.05f;
-    public float VanguardMaxDecrease { get; set; } = 0.02f;
-    public bool CashSimple { get; set; } = false;
+    public float VanguardMaxIncreaseRate { get; set; } = 5.0f;
+    public float VanguardMaxDecreaseRate { get; set; } = 2.0f;
+    public bool UseCashWithdrawal { get; set; } = false;
 
     private float lastYearWithdrawal = 0.0f;
     private float lastWithdrawalAmount = 0.0f;
@@ -89,7 +89,7 @@ public class WithdrawalStrategy
             throw new ApplicationException("invalid withdrawal use case");
         }
         // index with inflation
-        initialValue *= inflation;
+        InitialInvestment *= inflation;
 
         float withdrawalAmount = 0f;
 
@@ -107,14 +107,14 @@ public class WithdrawalStrategy
             if (method == WithdrawalMethod.STANDARD)
             {
                 // Fixed annual withdrawal rate divided into periodic withdrawals.
-                withdrawalAmount = WithrawalAmount(initialValue, WithdrawalRate, periods);
+                withdrawalAmount = WithrawalAmount(InitialInvestment, WithdrawalRate, periods);
             }
             else if (method == WithdrawalMethod.CURRENT)
             {
                 // Percentage-based withdrawal tied to the current portfolio value.
                 withdrawalAmount = WithrawalAmount(currentValue, WithdrawalRate, periods);
                 // Ensure the withdrawal does not fall below the specified minimum.
-                float minimumWithdrawalAmount = WithrawalAmount(initialValue, MinimumWithdrawalRate, periods);
+                float minimumWithdrawalAmount = WithrawalAmount(InitialInvestment, MinimumWithdrawalRate, periods);
                 if (withdrawalAmount < minimumWithdrawalAmount)
                 {
                     withdrawalAmount = minimumWithdrawalAmount;
@@ -134,20 +134,20 @@ public class WithdrawalStrategy
                     // Update withdrawals annually.
                     withdrawalAmount = currentValue * (WithdrawalRate / 100.0f);
                     // Cap increases and decreases based on specified limits.
-                    if (withdrawalAmount > (1.0f + VanguardMaxIncrease) * lastYearWithdrawal)
+                    if (withdrawalAmount > (1.0f + VanguardMaxIncreaseRate / 100.0f) * lastYearWithdrawal)
                     {
-                        withdrawalAmount = (1.0f + VanguardMaxIncrease) * lastYearWithdrawal;
+                        withdrawalAmount = (1.0f + VanguardMaxIncreaseRate / 100.0f) * lastYearWithdrawal;
                     }
-                    else if (withdrawalAmount < (1.0f - VanguardMaxDecrease) * lastYearWithdrawal)
+                    else if (withdrawalAmount < (1.0f - VanguardMaxDecreaseRate / 100.0f) * lastYearWithdrawal)
                     {
-                        withdrawalAmount = (1.0f - VanguardMaxDecrease) * lastYearWithdrawal;
+                        withdrawalAmount = (1.0f - VanguardMaxDecreaseRate / 100.0f) * lastYearWithdrawal;
                     }
                     lastYearWithdrawal = withdrawalAmount;
                 }
                 // Adjust withdrawal to a periodic base
                 withdrawalAmount = WithrawalAmount(currentValue, WithdrawalRate, periods);
                 // Ensure the withdrawal does not fall below the specified minimum.
-                float minimumWithdrawalAmount = WithrawalAmount(initialValue, MinimumWithdrawalRate, periods);
+                float minimumWithdrawalAmount = WithrawalAmount(InitialInvestment, MinimumWithdrawalRate, periods);
                 if (withdrawalAmount < minimumWithdrawalAmount)
                 {
                     withdrawalAmount = minimumWithdrawalAmount;
@@ -182,7 +182,7 @@ public class WithdrawalStrategy
 // Strategies with cash or effective withdrawal rate is greater than the monthly WithdrawalRate
 // withdrawing from cash if the effective rate exceeds the target monthly rate.
 /*
-if (CashSimple || ((effectiveWithdrawalRate * 100.0f) >= (WithdrawalRate / 12.0f)))
+if (UseCashWithdrawal || ((effectiveWithdrawalRate * 100.0f) >= (WithdrawalRate / 12.0f)))
 {
     // First, withdraw from cash if possible
     if (context.Cash > 0.0f)

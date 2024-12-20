@@ -15,13 +15,13 @@ public class Frequency
     public static void Simulate(Scenario scenario, int monthlyBuy, int frequency)
     {
         // Calculate the total number of months for the simulation period.
-        int numberOfMonths = scenario.Years * 12;
+        int numberOfMonths = scenario.TimeHorizon * 12;
         double total = 0;
         double max = 0;
         int simulations = 0;
 
         // Loop through each starting year within the scenario's range.
-        for (int currentYear = scenario.StartYear; currentYear <= scenario.EndYear - scenario.Years; currentYear++)
+        for (int currentYear = scenario.StartYear; currentYear <= scenario.EndYear - scenario.TimeHorizon; currentYear++)
         {
             // Loop through each month.
             for (int currentMonth = 1; currentMonth <= 12; currentMonth++)
@@ -85,7 +85,7 @@ public class Frequency
         List<double> worstResults = Enumerable.Repeat(0.0, 6).ToList();
         List<double> bestResults = Enumerable.Repeat(0.0, 6).ToList();
 
-        for (int currentYear = scenario.StartYear; currentYear <= scenario.EndYear - scenario.Years; currentYear++)
+        for (int currentYear = scenario.StartYear; currentYear <= scenario.EndYear - scenario.TimeHorizon; currentYear++)
         {
             for (int currentMonth = 1; currentMonth <= 12; currentMonth++)
             {

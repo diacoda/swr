@@ -23,13 +23,13 @@ public class Scenario
         ExchangeSet = s.ExchangeSet;
         ExchangeRates = s.ExchangeRates;
 
-        Years = s.Years;
+        TimeHorizon = s.TimeHorizon;
         WithdrawalRate = s.WithdrawalRate;
         StartYear = s.StartYear;
         EndYear = s.EndYear;
 
         SuccessRateLimit = s.SuccessRateLimit;
-        InitialValue = s.InitialValue;
+        InitialInvestment = s.InitialInvestment;
         WithdrawFrequency = s.WithdrawFrequency;
         Rebalance = s.Rebalance;
         RebalancingThreshold = s.RebalancingThreshold;
@@ -38,15 +38,15 @@ public class Scenario
         WithdrawalMethod = s.WithdrawalMethod;
 
         MinimumWithdrawalRate = s.MinimumWithdrawalRate;
-        VanguardMaxIncrease = s.VanguardMaxIncrease;
-        VanguardMaxDecrease = s.VanguardMaxDecrease;
+        VanguardMaxIncreaseRate = s.VanguardMaxIncreaseRate;
+        VanguardMaxDecreaseRate = s.VanguardMaxDecreaseRate;
 
         InitialCash = s.InitialCash;
-        CashSimple = s.CashSimple;
+        UseCashWithdrawal = s.UseCashWithdrawal;
 
         Inflation = s.Inflation;
-        PercentageRemainingTarget = s.PercentageRemainingTarget;
-        AdjustRemainingWithInflation = s.AdjustRemainingWithInflation;
+        FinalTargetPercentage = s.FinalTargetPercentage;
+        InflationAdjustedFinalTarget = s.InflationAdjustedFinalTarget;
 
         UseGlidepath = s.UseGlidepath;
         GlidepathAllocationChangeRate = s.GlidepathAllocationChangeRate;
@@ -55,8 +55,6 @@ public class Scenario
         UseSocialSecurity = s.UseSocialSecurity;
         SocialDelay = s.SocialDelay;
         SocialCoverage = s.SocialCoverage;
-
-        StrictValidation = s.StrictValidation;
     }
 
     private const float _monthlyRebalancingCost = 0.005f;
@@ -70,13 +68,13 @@ public class Scenario
     public List<DataVector> ExchangeRates { get; set; } = new List<DataVector>();
 
     public string Inflation { get; set; } = "no-inflation";
-    public int Years { get; set; }
+    public int TimeHorizon { get; set; }
     public float WithdrawalRate { get; set; } = 4.0f;
     public int StartYear { get; set; }
     public int EndYear { get; set; }
     // success rate limit for finding safw withdrawal rate, the success rate must be bigger than this rate
     public float SuccessRateLimit { get; set; } = 95.0f;
-    public float InitialValue { get; set; } = 10000.0f;
+    public float InitialInvestment { get; set; } = 10000.0f;
     public float Fees { get; set; } = 0.003f; // TER 0.3% = 0.003
     public WithdrawalFrequency WithdrawalFrequency { get; set; } = WithdrawalFrequency.MONTHLY;
     public int WithdrawFrequency { get; set; } = 1;
@@ -85,16 +83,16 @@ public class Scenario
 
     public WithdrawalMethod WithdrawalMethod { get; set; } = WithdrawalMethod.STANDARD;
     public float MinimumWithdrawalRate { get; set; } = 3.0f; // Minimum of 3% * initial
-    public float VanguardMaxIncrease { get; set; } = 0.05f;
-    public float VanguardMaxDecrease { get; set; } = 0.02f;
+    public float VanguardMaxIncreaseRate { get; set; } = 5.0f;
+    public float VanguardMaxDecreaseRate { get; set; } = 2.0f;
     public float InitialCash { get; set; } = 0.0f;
-    public bool CashSimple { get; set; } = false;
+    public bool UseCashWithdrawal { get; set; } = false;
 
     // the percentage from the initial value that must remain after withdrawals
     // if the current value is below, then the simulation fails as it is not able to finish abive the percentage remaining threshold
-    public float PercentageRemainingTarget { get; set; } = 0.01f;
+    public float FinalTargetPercentage { get; set; } = 0.01f;
     // adjust the initial value with inflation, such that at the end of the simulation, the value is more realistic 
-    public bool AdjustRemainingWithInflation { get; set; } = true;
+    public bool InflationAdjustedFinalTarget { get; set; } = true;
 
     public bool UseGlidepath { get; set; } = false;
     public float GlidepathAllocationChangeRate { get; set; } = 0.0f;
@@ -103,8 +101,6 @@ public class Scenario
     public bool UseSocialSecurity { get; set; } = false;
     public int SocialDelay { get; set; } = 0;
     public float SocialCoverage { get; set; } = 0.0f;
-
-    public bool StrictValidation { get; set; } = true;
 
     public bool IsFailure(Context context, double currentValue)
     {
@@ -115,14 +111,14 @@ public class Scenario
         }
 
         // If it's the end, we need to respect the percentage that must remain
-        if (AdjustRemainingWithInflation)
+        if (InflationAdjustedFinalTarget)
         {
             // target value is adjusted with inflation
-            return currentValue <= PercentageRemainingTarget * context.FinalRemainingTarget;
+            return currentValue <= FinalTargetPercentage * context.FinalRemainingTarget;
         }
         else
         {
-            return currentValue <= PercentageRemainingTarget * InitialValue;
+            return currentValue <= FinalTargetPercentage * InitialInvestment;
         }
     }
 
@@ -381,13 +377,13 @@ public class Scenario
                     context.VanguardWithdrawal = totalValue * (WithdrawalRate / 100.0f);
 
                     // Cap increases and decreases based on specified limits.
-                    if (context.VanguardWithdrawal > (1.0f + VanguardMaxIncrease) * context.LastYearWithdrawal)
+                    if (context.VanguardWithdrawal > (1.0f + VanguardMaxIncreaseRate / 100.0f) * context.LastYearWithdrawal)
                     {
-                        context.VanguardWithdrawal = (1.0f + VanguardMaxIncrease) * context.LastYearWithdrawal;
+                        context.VanguardWithdrawal = (1.0f + VanguardMaxIncreaseRate / 100.0f) * context.LastYearWithdrawal;
                     }
-                    else if (context.VanguardWithdrawal < (1.0f - VanguardMaxDecrease) * context.LastYearWithdrawal)
+                    else if (context.VanguardWithdrawal < (1.0f - VanguardMaxDecreaseRate / 100.0f) * context.LastYearWithdrawal)
                     {
-                        context.VanguardWithdrawal = (1.0f - VanguardMaxDecrease) * context.LastYearWithdrawal;
+                        context.VanguardWithdrawal = (1.0f - VanguardMaxDecreaseRate / 100.0f) * context.LastYearWithdrawal;
                     }
                 }
                 // Adjust withdrawal to a periodic base
@@ -421,7 +417,7 @@ public class Scenario
 
             // Strategies with cash or effective withdrawal rate is greater than the monthly WithdrawalRate
             // withdrawing from cash if the effective rate exceeds the target monthly rate.
-            if (CashSimple || ((effectiveWithdrawalRate * 100.0f) >= (WithdrawalRate / 12.0f)))
+            if (UseCashWithdrawal || ((effectiveWithdrawalRate * 100.0f) >= (WithdrawalRate / 12.0f)))
             {
                 // First, withdraw from cash if possible
                 if (context.Cash > 0.0f)
@@ -486,7 +482,7 @@ public class Scenario
             return res;
         }
 
-        if (Years <= 0)
+        if (TimeHorizon <= 0)
         {
             res.Message = "The number of years must be at least 1";
             res.Error = true;
@@ -529,10 +525,10 @@ public class Scenario
             return res;
         }
 
-        if (EndYear - StartYear < Years)
+        if (EndYear - StartYear < TimeHorizon)
         {
-            res.Message = $"The period is too short for a {Years} years simulation. The number of years has been reduced to {EndYear - StartYear}";
-            Years = EndYear - StartYear;
+            res.Message = $"The period is too short for a {TimeHorizon} TimeHorizon simulation. The number of TimeHorizon has been reduced to {EndYear - StartYear}";
+            TimeHorizon = EndYear - StartYear;
         }
 
         if (UseGlidepath)
@@ -619,7 +615,7 @@ public class Scenario
         List<List<float>> yearlyWithdrawals = new List<List<float>>();
 
         // 3. Do the actual simulation
-        for (int currentYear = StartYear; currentYear <= EndYear - Years; currentYear++)
+        for (int currentYear = StartYear; currentYear <= EndYear - TimeHorizon; currentYear++)
         {
             for (int currentMonth = 1; currentMonth <= 12; currentMonth++)
             {
@@ -654,7 +650,7 @@ public class Scenario
                     exchangeRates[i] = ExchangeRates[i].GetDataVector(currentYear, currentMonth).GetEnumerator();
                     exchangeRates[i].MoveNext();
 
-                    currentValues[i] = InitialValue * (Portfolio.Allocations[i].AllocationCurrent / 100.0f);
+                    currentValues[i] = InitialInvestment * (Portfolio.Allocations[i].AllocationCurrent / 100.0f);
                 }
 
                 // Add an empty list to the list of lists
@@ -662,26 +658,26 @@ public class Scenario
 
                 Context context = new Context();
                 context.MonthIndex = 1;
-                context.TotalMonths = Years * 12;
+                context.TotalMonths = TimeHorizon * 12;
                 // The amount of money withdrawn per year (STANDARD method)
-                context.Withdrawal = InitialValue * (WithdrawalRate / 100.0f);
+                context.Withdrawal = InitialInvestment * (WithdrawalRate / 100.0f);
                 // The minimum amount of money withdraw (CURRENT method)
-                context.MinimumWithdrawal = InitialValue * (MinimumWithdrawalRate / 100.0f);
+                context.MinimumWithdrawal = InitialInvestment * (MinimumWithdrawalRate / 100.0f);
                 // The amount of cash available
                 context.Cash = InitialCash;
                 // Used for the target threshold
-                context.FinalRemainingTarget = InitialValue;
+                context.FinalRemainingTarget = InitialInvestment;
 
                 int endYear = currentYear + (currentMonth - 1 + context.TotalMonths - 1) / 12;
                 int endMonth = 1 + (currentMonth - 1 + (context.TotalMonths - 1) % 12) % 12;
 
-                WithdrawalStrategy withdrawalStrategy = new WithdrawalStrategy(InitialValue);
+                WithdrawalStrategy withdrawalStrategy = new WithdrawalStrategy(InitialInvestment);
                 withdrawalStrategy.MinimumWithdrawalRate = MinimumWithdrawalRate;
                 withdrawalStrategy.WithdrawalRate = WithdrawalRate;
                 withdrawalStrategy.WithdrawalFrequency = WithdrawalFrequency;
-                withdrawalStrategy.CashSimple = false;
-                withdrawalStrategy.VanguardMaxDecrease = VanguardMaxDecrease;
-                withdrawalStrategy.VanguardMaxIncrease = VanguardMaxIncrease;
+                withdrawalStrategy.UseCashWithdrawal = false;
+                withdrawalStrategy.VanguardMaxDecreaseRate = VanguardMaxDecreaseRate;
+                withdrawalStrategy.VanguardMaxIncreaseRate = VanguardMaxIncreaseRate;
 
                 for (int y = currentYear; y <= endYear; y++)
                 {
@@ -725,7 +721,7 @@ public class Scenario
                         context.MinimumWithdrawal *= inflation;
                         context.FinalRemainingTarget *= inflation;
 
-                        float w = withdrawalStrategy.CalculateWithdrawalAmount(m, Years * 12, currentValues.Sum(), inflation);
+                        float w = withdrawalStrategy.CalculateWithdrawalAmount(m, TimeHorizon * 12, currentValues.Sum(), inflation);
                         //Console.WriteLine($"Withdrawal {w} year:{y} month:{m} within current year: {currentYear} and current month: {currentMonth}");
                         // Perform withdrawals
                         step(() => Withdraw(context, currentValues, N), res, currentYear, currentMonth, ref failure, context);
@@ -827,10 +823,10 @@ public class Scenario
             }
         }
         // Final metrics
-        res.AverageWithdrawnPerYear = (res.AverageWithdrawnPerYear / Years) / res.Successes;
+        res.AverageWithdrawnPerYear = (res.AverageWithdrawnPerYear / TimeHorizon) / res.Successes;
         res.SuccessRate = 100.0f * (res.Successes / (float)(res.Successes + res.Failures));
         res.ComputeTerminalValues(terminalValues);
-        res.ComputeWithdrawals(yearlyWithdrawals, Years);
+        res.ComputeWithdrawals(yearlyWithdrawals, TimeHorizon);
         _logger.LogInformation("{@Results}", res);
 
         stopwatch.Stop();
@@ -858,23 +854,20 @@ public class Scenario
 
         bool changed = false;
 
-        if (StrictValidation)
+        if (!ValidYear(InflationData, StartYear) && !ValidYear(InflationData, EndYear))
         {
-            if (!ValidYear(InflationData, StartYear) && !ValidYear(InflationData, EndYear))
+            results.Message = "The given period is out of the historical data, it's either too far in the future or too far in the past";
+            results.Error = true;
+            return results;
+        }
+
+        foreach (var v in Values)
+        {
+            if (!ValidYear(v, StartYear) && !ValidYear(v, EndYear))
             {
                 results.Message = "The given period is out of the historical data, it's either too far in the future or too far in the past";
                 results.Error = true;
                 return results;
-            }
-
-            foreach (var v in Values)
-            {
-                if (!ValidYear(v, StartYear) && !ValidYear(v, EndYear))
-                {
-                    results.Message = "The given period is out of the historical data, it's either too far in the future or too far in the past";
-                    results.Error = true;
-                    return results;
-                }
             }
         }
 
