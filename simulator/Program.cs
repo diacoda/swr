@@ -24,39 +24,12 @@ class Program
             .UseSerilog() // Use Serilog as the logging provider
             .ConfigureServices((hostContext, services) =>
             {
-                services.AddSingleton<MyApp>();
+                services.AddSingleton<App>();
                 services.AddScoped<Simulator>();
             });
         var app = builder.Build();
-        await app.Services.GetRequiredService<MyApp>().StartAsync();
+        await app.Services.GetRequiredService<App>().StartAsync();
         Console.WriteLine("Done!");
     }
 }
 
-class MyApp
-{
-    private IHostEnvironment _env;
-    private ILogger<MyApp> _logger;
-    private IConfiguration _configuration;
-    private Simulator _simulator;
-
-    public MyApp(   IHostEnvironment env, 
-                    ILogger<MyApp> logger, 
-                    IConfiguration configuration,
-                    Simulator simulator)
-    {
-        _env = env;
-        _logger = logger;
-        _configuration = configuration;
-        _simulator = simulator;
-    }
-
-    public Task StartAsync()
-    {
-        _logger.LogInformation("logging");
-        Console.WriteLine(_configuration["key"]);
-        Console.WriteLine(_env.ContentRootPath);
-
-        return Task.CompletedTask;
-    }
-}
