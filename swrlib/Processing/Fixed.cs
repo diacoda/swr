@@ -1,5 +1,4 @@
-using Swr.Data;
-using Swr.Investment;
+using Swr.Model;
 using Swr.Simulation;
 
 namespace Swr.Processing;

@@ -3,6 +3,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Swr.Config;
+using Swr.Model;
 using Swr.Simulation;
 public class App
 {
@@ -25,7 +26,7 @@ public class App
     public Task StartAsync()
     {
         IConfigurationSection simulationsSection = _configuration.GetSection("Simulations");
-        Dictionary<Command, ScenarioConfig>? scenarios = simulationsSection.Get<Dictionary<Command, ScenarioConfig>>();
+        Dictionary<Command, SimulationRequest>? scenarios = simulationsSection.Get<Dictionary<Command, SimulationRequest>>();
         if (scenarios == null || scenarios.Count == 0)
         {
             throw new ApplicationException("No config");
@@ -47,7 +48,7 @@ public class App
         return Task.CompletedTask;
     }
 
-    public bool Validate(Command command, ScenarioConfig config)
+    public bool Validate(Command command, SimulationRequest request)
     {
         switch (command)
         {

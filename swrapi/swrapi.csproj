@@ -13,6 +13,7 @@
 
   <ItemGroup>
     <ProjectReference Include="../swrlib/swrlib.csproj" />
+    <ProjectReference Include="../swrmodel/swrmodel.csproj" />
   </ItemGroup>
 
 </Project>

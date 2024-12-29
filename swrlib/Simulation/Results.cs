@@ -1,7 +1,6 @@
+using Swr.Model;
+
 namespace Swr.Simulation;
-
-using System.Collections.Generic;
-
 public class Results
 {
     // Fields

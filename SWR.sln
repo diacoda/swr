@@ -13,6 +13,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "swrplay", "swrplay\swrplay.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "simulator", "simulator\simulator.csproj", "{7A4B43EF-2893-40BE-A4B4-CF112014CA2D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "swrmodel", "swrmodel\swrmodel.csproj", "{9A7185F8-7D8B-427F-9127-B5B672D91A14}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -39,6 +41,10 @@ Global
 		{7A4B43EF-2893-40BE-A4B4-CF112014CA2D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7A4B43EF-2893-40BE-A4B4-CF112014CA2D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7A4B43EF-2893-40BE-A4B4-CF112014CA2D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9A7185F8-7D8B-427F-9127-B5B672D91A14}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9A7185F8-7D8B-427F-9127-B5B672D91A14}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9A7185F8-7D8B-427F-9127-B5B672D91A14}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9A7185F8-7D8B-427F-9127-B5B672D91A14}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

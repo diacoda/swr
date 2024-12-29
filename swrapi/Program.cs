@@ -1,5 +1,5 @@
+using Swr.Model;
 using Swr.Simulation;
-using swrapi.Model;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -21,9 +21,9 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-app.MapPost("/simulations", (SimulationRequest request,  ILogger<Scenario> logger) =>
+app.MapPost("/simulations", (SimulationRequest request, ILogger<Scenario> logger, Scenario scenario) =>
 {
-    var scenario = request.ToScenario(logger);
+    scenario.CopyFrom(request);
     return Microsoft.AspNetCore.Http.Results.Ok(new SimulationResponse());
 })
 .WithName("Simulations")

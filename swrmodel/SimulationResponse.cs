@@ -1,4 +1,4 @@
-namespace swrapi.Model;
+namespace Swr.Model;
 
 public class SimulationResponse
 {

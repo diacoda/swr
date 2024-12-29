@@ -1,4 +1,4 @@
-namespace Swr.Simulation;
+namespace Swr.Model;
 public enum WithdrawalMethod
 {
     STANDARD, // Withdraw based on the initial portfolio

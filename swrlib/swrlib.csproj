@@ -13,4 +13,7 @@
     <PackageReference Include="Serilog.Sinks.File" Version="6.0.0" />
     <PackageReference Include="System.Runtime.Caching" Version="9.0.0" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../swrmodel/swrmodel.csproj" />
+  </ItemGroup>
 </Project>

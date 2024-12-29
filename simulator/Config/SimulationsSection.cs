@@ -1,5 +1,7 @@
+using Swr.Model;
+
 namespace Swr.Config;
 public class SimulationsSection
 {
-    public Dictionary<string, ScenarioConfig> Simulations { get; set; }
+    public Dictionary<string, SimulationRequest>? Simulations { get; set; }
 }

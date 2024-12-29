@@ -1,4 +1,4 @@
-using Swr.Simulation;
+using Swr.Model;
 public enum Rebalancing
 {
     NONE,

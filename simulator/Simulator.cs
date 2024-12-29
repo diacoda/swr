@@ -7,6 +7,5 @@ public class Simulator
     public Simulator(ILogger<Simulator> logger, IConfiguration configuration)
     {
         
-        int i = 0;
     }
 }

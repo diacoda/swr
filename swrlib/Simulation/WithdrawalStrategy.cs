@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using Swr.Model;
 
 namespace Swr.Simulation;
 

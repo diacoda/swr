@@ -3,6 +3,7 @@ using System.Diagnostics;
 using Swr;
 using Swr.Data;
 using Swr.Investment;
+using Swr.Model;
 namespace Swr.Simulation;
 
 public class Scenario
@@ -15,6 +16,18 @@ public class Scenario
         Portfolio = new Portfolio("");
     }
 
+    public void CopyFrom(SimulationRequest request)
+    {
+        TimeHorizon = request.TimeHorizon;
+        StartYear = request.StartYear;
+        EndYear = request.EndYear;
+        Portfolio portfolio = new Portfolio(request.Portfolio);
+        Portfolio = portfolio;
+        Inflation = request.Inflation;
+        Fees = request.Fees;
+        WithdrawalMethod = request.WithdrawalMethod;
+        WithdrawalFrequency = request.WithdrawalFrequency;
+    }
     public void CopyFrom(Scenario s)
     {
         Portfolio = s.Portfolio;

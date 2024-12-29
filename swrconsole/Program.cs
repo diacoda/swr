@@ -7,6 +7,7 @@ using Swr.Processing;
 using Swr.Simulation;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
+using Swr.Model;
 
 var logFilePath = "logs/swrconsole.log";
 

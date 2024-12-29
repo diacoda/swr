@@ -20,6 +20,7 @@
     </Content>
   </ItemGroup>
     <ItemGroup>
+      <ProjectReference Include="../swrmodel/swrmodel.csproj" />
       <ProjectReference Include="..\swrlib\swrlib.csproj" />
     </ItemGroup>
 </Project>
