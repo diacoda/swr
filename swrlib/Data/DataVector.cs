@@ -4,6 +4,8 @@ namespace Swr.Data;
 public class DataVector : IEnumerable<Item>
 {
     public List<Item> Data { get; set; }
+    public List<Item> Nominal { get; set; }
+    public List<Item> Normalized { get; set; }
 
     // Property for the name
     public string Name { get; set; }
@@ -13,6 +15,8 @@ public class DataVector : IEnumerable<Item>
     {
         Name = name;
         Data = new List<Item>();
+        Nominal = new List<Item>();
+        Normalized = new List<Item>();
     }
 
     public Item this[int i]
@@ -80,7 +84,8 @@ public class DataVector : IEnumerable<Item>
                 int year = int.Parse(values[1]);
                 float value = float.Parse(values[2]);
 
-                var dataItem = new Item(month, year, value);
+                var dataItem = new
+                Item(month, year, value);
                 Data.Add(dataItem);
             }
         }
@@ -119,8 +124,13 @@ public class DataVector : IEnumerable<Item>
         {
             return;
         }
+        Nominal = new List<Item>(new Item[Data.Count]);
 
         float previousValue = Data[0].Value;
+        Nominal[0] = new Item();
+        Nominal[0].Value = previousValue;
+        Nominal[0].Year = Data[0].Year;
+        Nominal[0].Month = Data[0].Month;
         Data[0].Value = 1.0f;
 
         for (int i = 1; i < Data.Count; i++)
@@ -128,6 +138,10 @@ public class DataVector : IEnumerable<Item>
             float currentValue = Data[i].Value;
             Data[i].Value = Data[i - 1].Value * (currentValue / previousValue);
             previousValue = currentValue;
+            Nominal[i] = new Item();
+            Nominal[i].Value = previousValue;
+            Nominal[i].Year = Data[i].Year;
+            Nominal[i].Month = Data[i].Month;
         }
     }
 
@@ -135,14 +149,23 @@ public class DataVector : IEnumerable<Item>
     public void TransformToReturns()
     {
         if (Data.Count == 0) return;
+        Normalized = new List<Item>(new Item[Data.Count]);
 
         float previousValue = Data[0].Value;
+        Normalized[0] = new Item();
+        Normalized[0].Value = previousValue;
+        Normalized[0].Year = Data[0].Year;
+        Normalized[0].Month = Data[0].Month;
 
         for (int i = 1; i < Data.Count; i++)
         {
             float newValue = Data[i].Value / previousValue;
             previousValue = Data[i].Value;
             Data[i].Value = newValue;
+            Normalized[i] = new Item();
+            Normalized[i].Value = previousValue;
+            Normalized[i].Year = Data[0].Year;
+            Normalized[i].Month = Data[0].Month;
         }
     }
 

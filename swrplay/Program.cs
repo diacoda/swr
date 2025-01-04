@@ -1,14 +1,9 @@
-﻿using System;
-using System.Globalization;
-using System.IO;
-using Swr.Data;
-using Swr.Investment;
-using Swr.Simulation;
-using Serilog;
+﻿using Serilog;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Swr.Integration;
-using Integration;
+using Swr.Play;
+
 
 var logFilePath = "logs/swrplay.log";
 
@@ -28,12 +23,14 @@ try
         .UseSerilog() // Use Serilog as the logging provider
         .ConfigureServices((context, services) =>
         {
-            services.AddTransient<MarketData>();
-            services.AddScoped<MarketData>();
+            services.AddSingleton<RealReturn>();
+            services.AddSingleton<MarketData>();
         })
         .Build();
 
-    var service = host.Services.GetRequiredService<MarketData>();
+    var service = host.Services.GetRequiredService<RealReturn>();
+    service.Calculate();
+    //var service = host.Services.GetRequiredService<MarketData>();
     //service.TransformCanadaCPI();
     //string? filePath = await service.GetData("GC=F", TickerFrequency.Daily);
     //service.TransformExchangeRates();

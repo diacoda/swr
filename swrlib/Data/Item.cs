@@ -13,6 +13,10 @@ public class Item
         Value = value;
     }
 
+    public Item()
+    {
+    }
+
     public override string ToString()
     {
         return $"Month: {Month}, Year: {Year}, Value: {Value}";

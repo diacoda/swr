@@ -52,7 +52,7 @@ try
     scenario.TimeHorizon = 30;
     scenario.StartYear = 1871;
     scenario.EndYear = 2023;
-    string allocation = "us_stocks_n:70;gold:15;ca_stocks:15;";
+    string allocation = "us_stocks:100";
     scenario.Portfolio = new Portfolio(allocation);
     scenario.Inflation = "us_inflation";
     scenario.WithdrawalFrequency = WithdrawalFrequency.MONTHLY;
