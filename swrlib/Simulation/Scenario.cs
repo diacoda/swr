@@ -24,7 +24,7 @@ public class Scenario
         Portfolio portfolio = new Portfolio(request.Portfolio);
         Portfolio = portfolio;
         Inflation = request.Inflation;
-        Fees = request.Fees;
+        ExpenseRatio = request.ExpenseRatio;
         WithdrawalMethod = request.WithdrawalMethod;
         WithdrawalFrequency = request.WithdrawalFrequency;
     }
@@ -46,7 +46,7 @@ public class Scenario
         WithdrawFrequency = s.WithdrawFrequency;
         Rebalance = s.Rebalance;
         RebalancingThreshold = s.RebalancingThreshold;
-        Fees = s.Fees;
+        ExpenseRatio = s.ExpenseRatio;
 
         WithdrawalMethod = s.WithdrawalMethod;
 
@@ -88,7 +88,7 @@ public class Scenario
     // success rate limit for finding safw withdrawal rate, the success rate must be bigger than this rate
     public float SuccessRateLimit { get; set; } = 95.0f;
     public float InitialInvestment { get; set; } = 10000.0f;
-    public float Fees { get; set; } = 0.003f; // TER 0.3% = 0.003
+    public float ExpenseRatio { get; set; } = 0.003f; // TER 0.3% = 0.003
     public WithdrawalFrequency WithdrawalFrequency { get; set; } = WithdrawalFrequency.MONTHLY;
     public int WithdrawFrequency { get; set; } = 1;
     public Rebalancing Rebalance { get; set; } = Rebalancing.NONE;
@@ -153,11 +153,11 @@ public class Scenario
         }
 
         // Simulate TER
-        if (Fees > 0.0f)
+        if (ExpenseRatio > 0.0f)
         {
             for (int i = 0; i < currentValues.Count; i++)
             {
-                currentValues[i] *= 1.0f - (Fees / 12.0f);
+                currentValues[i] *= 1.0f - (ExpenseRatio / 12.0f);
             }
 
             // TER can cause failure
@@ -567,7 +567,7 @@ public class Scenario
                 return res;
             }
 
-            if (GlidepathAllocationChangeRate > 0.0f && GlidepathAllocationTarget <= Portfolio.Allocations[0].AllocationValue)
+            if (GlidepathAllocationChangeRate > 0.0f && GlidepathAllocationTarget <= Portfolio.Allocations[0].AllocationPercentage)
             {
                 //std::cout << scenario.GlidepathAllocationChangeRate << std::endl;
                 //std::cout << scenario.GlidepathAllocationTarget << std::endl;
@@ -577,7 +577,7 @@ public class Scenario
                 return res;
             }
 
-            if (GlidepathAllocationChangeRate < 0.0f && GlidepathAllocationTarget >= Portfolio.Allocations[0].AllocationValue)
+            if (GlidepathAllocationChangeRate < 0.0f && GlidepathAllocationTarget >= Portfolio.Allocations[0].AllocationPercentage)
             {
                 //std::cout << scenario.GlidepathAllocationChangeRate << std::endl;
                 //std::cout << scenario.GlidepathAllocationTarget << std::endl;
@@ -642,7 +642,7 @@ public class Scenario
                 // Reset the allocation for the context
                 foreach (var asset in Portfolio.Allocations)
                 {
-                    asset.AllocationCurrent = asset.AllocationValue;
+                    asset.AllocationCurrent = asset.AllocationPercentage;
                 }
 
                 // Get the data vector for the current year and month.
@@ -838,6 +838,7 @@ public class Scenario
         // Final metrics
         res.AverageWithdrawnPerYear = (res.AverageWithdrawnPerYear / TimeHorizon) / res.Successes;
         res.SuccessRate = 100.0f * (res.Successes / (float)(res.Successes + res.Failures));
+        res.WithdrawalRate = WithdrawalRate;
         res.ComputeTerminalValues(terminalValues);
         res.ComputeWithdrawals(yearlyWithdrawals, TimeHorizon);
         _logger.LogInformation("{@Results}", res);

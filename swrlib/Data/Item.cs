@@ -5,6 +5,7 @@ public class Item
     public int Month { get; set; }
     public int Year { get; set; }
     public float Value { get; set; }
+    public int Index {get;set;}
 
     public Item(int month, int year, float value)
     {
@@ -19,6 +20,6 @@ public class Item
 
     public override string ToString()
     {
-        return $"Month: {Month}, Year: {Year}, Value: {Value}";
+        return $"Month: {Month}, Year: {Year}, Value: {Value}, Index: {Index}";
     }
 }

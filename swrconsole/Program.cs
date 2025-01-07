@@ -23,6 +23,7 @@ Log.Logger = new LoggerConfiguration()
 
 try
 {
+    Environment.CurrentDirectory = "C:\\src\\swr";
     Log.Information("started");
     //await host.RunAsync();
     // Build a config object, using env vars and JSON providers.
@@ -52,14 +53,14 @@ try
     scenario.TimeHorizon = 30;
     scenario.StartYear = 1871;
     scenario.EndYear = 2023;
-    string allocation = "us_stocks:100";
+    string allocation = "us_stocks:75;us_bonds:5;cash:10;gold2023:10";
     scenario.Portfolio = new Portfolio(allocation);
     scenario.Inflation = "us_inflation";
     scenario.WithdrawalFrequency = WithdrawalFrequency.MONTHLY;
     scenario.WithdrawalMethod = WithdrawalMethod.STANDARD;
-    scenario.WithdrawalRate = 4.0f;
-    scenario.Fees = 0.003f;
-    scenario.MinimumWithdrawalRate = 3.0f;
+    scenario.WithdrawalRate = 2.75f;
+    scenario.ExpenseRatio = 0.003f;
+    scenario.MinimumWithdrawalRate = 2.0f;
     scenario.InflationAdjustedFinalTarget = true;
     scenario.FinalTargetPercentage = 0.1f;
     scenario.UseCashWithdrawal = false;
@@ -113,7 +114,7 @@ try
     if (arguments["fees"] != null)
     {
         // there is a default, 0.01
-        scenario.Fees = (float)arguments["fees"] / 100.0f;
+        scenario.ExpenseRatio = (float)arguments["fees"] / 100.0f;
     }
     if (arguments.TryGetValue("minimumWithdrawalRate", out var minimumWithdrawalRate))
     {

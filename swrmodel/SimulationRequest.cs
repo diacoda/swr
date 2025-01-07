@@ -6,7 +6,7 @@ public class SimulationRequest
     public float InitialCash { get; set; } = 0.0f;
     public string Portfolio { get; set; } = String.Empty;
     public string Inflation { get; set; } = "no-inflation";
-    public float Fees { get; set; } = 0.003f; // TER 0.3% = 0.003
+    public float ExpenseRatio { get; set; } = 0.003f; // TER 0.3% = 0.003
     public int StartYear { get; set; }
     public int EndYear { get; set; }
     public int TimeHorizon { get; set; }

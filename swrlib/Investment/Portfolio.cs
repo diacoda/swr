@@ -24,7 +24,7 @@ public class Portfolio
                 {
                     if (allowZero || allocation > 0.0f)
                     {
-                        portfolio.Add(new Allocation { Asset = asset, AllocationValue = allocation });
+                        portfolio.Add(new Allocation { Asset = asset, AllocationPercentage = allocation });
                     }
                 }
                 else
@@ -48,7 +48,7 @@ public class Portfolio
 
         foreach (var position in portfolio)
         {
-            total += position.AllocationValue;
+            total += position.AllocationPercentage;
         }
 
         return total;
@@ -62,7 +62,7 @@ public class Portfolio
         {
             for (int i = 0; i < portfolio.Count; i++)
             {
-                portfolio[i].AllocationValue *= 100.0f / total;
+                portfolio[i].AllocationPercentage *= 100.0f / total;
             }
         }
     }
