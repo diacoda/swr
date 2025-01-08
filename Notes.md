@@ -20,6 +20,12 @@ nr|ir|wr|fee|real
 0.01|0.002|0.0033|0.00025|100.44
 where 100.44 = (100 - 0.0033 * 100) (1 + 0.01) / (1 + 0.002) (1 - 0.00025)
 
+Data
+Calculate asset returns
+- we get monthly historical nominal asset prices as a time series
+- normalize the time series by starting at 1
+- calculate percentage returns month over month
+Calculate inflation returns
 
 Combinations:
 start/end dates
