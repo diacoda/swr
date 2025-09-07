@@ -13,51 +13,6 @@ public class Simulator
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    private string GetFilePath(string assetName)
-    {
-        string fileName = assetName;
-        return Path.GetFullPath(Path.Combine(Environment.CurrentDirectory, $"stock-data/{fileName}.csv"));
-    }
-
-    private List<Item> LoadFromCSV(string assetName)
-    {
-        List<Item> data = new List<Item>();
-        string filePath = GetFilePath(assetName);
-        if (!File.Exists(filePath))
-        {
-            throw new FileNotFoundException($"{filePath} not found");
-        }
-        using StreamReader reader = new StreamReader(filePath);
-        string? line;
-        int index = 0;
-        while ((line = reader.ReadLine()) != null)
-        {
-            var values = line.Split(',');
-            if (values.Length == 3)
-            {
-                int month = int.Parse(values[0]);
-                int year = int.Parse(values[1]);
-                float value = float.Parse(values[2]);
-
-                var dataItem = new Item(month, year, value);
-                dataItem.Index = ++index;
-                data.Add(dataItem);
-            }
-        }
-        
-        // Method to ensure the data ends with a full year
-        while (data.Count > 0 && data[data.Count - 1].Month != 12)
-        {
-            data.RemoveAt(data.Count - 1);
-        }
-    
-        // Method to ensure the data starts with a full year
-        while (data.Count > 0 && data[0].Month != 1)
-        {
-            data.RemoveAt(0);
-        }
-        return data;
-    }
 
     private List<Item> CalculateSCR(List<Item> c1s, List<Item> sumCs, int totalMonths)
     {
@@ -239,63 +194,9 @@ public class Simulator
         return assetRealReturns;
     }
     
-    private List<Item> TransformToReturn(List<Item> normalized)
-    {
-        List<Item> returns = new List<Item>();
-        if (normalized.Count == 0)
-        {
-            return returns;
-        }
-        Item item = new();
-        item.Value = 1.0f;
-        item.Index = normalized[0].Index;
-        item.Month = normalized[0].Month;
-        item.Year = normalized[0].Year;
-        returns.Add(item);
+    
 
-        for (int i = 1; i < normalized.Count; i++)
-        {
-            item = new Item();
-            item.Index = normalized[i].Index;
-            item.Value = normalized[i].Value / normalized[i - 1].Value;
-            item.Month = normalized[i].Month;
-            item.Year = normalized[i].Year;
-            returns.Add(item);
-        }
-        return returns;
-    }
-
-    private List<Item> Normalize(List<Item> nominal)
-    {
-        List<Item> normalized = new List<Item>();
-        if (nominal.Count == 0)
-        {
-            return normalized;
-        }
-
-        if (Math.Abs(nominal[0].Value - 1.0) < 0.0001)
-        {
-            return normalized;
-        }
-
-        Item item = new();
-        item.Index = nominal[0].Index;
-        item.Value = 1.0f;
-        item.Month = nominal[0].Month;
-        item.Year = nominal[0].Year;
-        normalized.Add(item);
-
-        for (int i = 1; i < nominal.Count; i++)
-        {
-            item = new Item();
-            item.Index = nominal[i].Index;
-            item.Value = normalized[i - 1].Value * nominal[i].Value / nominal[i - 1].Value;
-            item.Month = nominal[i].Month;
-            item.Year = nominal[i].Year;
-            normalized.Add(item);
-        }
-        return normalized;
-    }
+    
 
     float[] ConvertListToFloat(List<Item> items)
     {
@@ -378,22 +279,16 @@ public class Simulator
         {
             Asset asset = new Asset(allocation.Asset);
             asset.Percent = allocation.AllocationPercentage / 100.0f;
-            List<Item> nominal = LoadFromCSV(allocation.Asset);
-            asset.Nominal = nominal;
-            List<Item> normalized = Normalize(nominal);
-            asset.Normalized = normalized;
-            List<Item> returns = TransformToReturn(normalized);
-            asset.Returns = returns;
+            asset.Configure();
             assets.Add(asset);
         }
 
-        List<Item> nominalInflation = LoadFromCSV(scenario.Inflation);
-        List<Item> normalizedInflation = Normalize(nominalInflation);
-        List<Item> returnsInflation = TransformToReturn(normalizedInflation);
+        Asset inflation = new Asset(scenario.Inflation);
+        inflation.Configure();
 
         List<Item> totalReturns = TotalReturns(assets);
         
-        List<Item> realReturns = AssetRealReturns(totalReturns, returnsInflation, scenario.ExpenseRatio);
+        List<Item> realReturns = AssetRealReturns(totalReturns, inflation.Returns, scenario.ExpenseRatio);
         List<Item> cumulativeBackwardRealReturn = CumulativeBackwardRealReturn(realReturns);
         int endYear = scenario.EndYear;
         int startYear = scenario.StartYear;

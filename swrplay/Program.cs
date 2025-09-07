@@ -25,7 +25,9 @@ Log.Logger = new LoggerConfiguration()
 try
 {
     Log.Information("started");
-    Environment.CurrentDirectory = Path.Combine(DriveInfo.GetDrives()[0].Name, "src", "swr");
+    var solutionFolder = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..");
+    Environment.CurrentDirectory = Path.GetFullPath(solutionFolder);
+
     var host = Host.CreateDefaultBuilder(args)
         .UseSerilog() // Use Serilog as the logging provider
         .ConfigureServices((context, services) =>
@@ -40,7 +42,8 @@ try
     scenario.TimeHorizon = 30;
     scenario.StartYear = 1871;
     scenario.EndYear = 2023;
-    string allocation = "us_stocks:75;us_bonds:5;cash:10;gold2023:10";
+    //string allocation = "us_stocks:75;us_bonds:5;cash:10;gold2023:10";
+    string allocation = "us_stocks:80;;cash:10;gold2023:10";
     scenario.Portfolio = new Portfolio(allocation);
     scenario.Inflation = "us_inflation";
     scenario.WithdrawalFrequency = WithdrawalFrequency.MONTHLY;
@@ -62,12 +65,12 @@ try
 
     var service = host.Services.GetRequiredService<Simulator>();
     WithdrawalRates withdrawalRates = service.CalculateWithdrawalRates(scenario);
-    
+
     //var service = host.Services.GetRequiredService<MarketData>();
     //service.TransformCanadaCPI();
     //string? filePath = await service.GetData("GC=F", TickerFrequency.Daily);
     //service.TransformExchangeRates();
-    
+
     scenario.WithdrawalRate = withdrawalRates.Fail0Percent;
     Fixed.Simulate(scenario);
 
